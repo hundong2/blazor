@@ -1,0 +1,49 @@
+﻿@page "/counter"
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+@if (currentCount > 0)
+{
+    <p>Incremented by: @IncrementCounter</p>
+}
+
+@if (currentCount > 100 )
+{
+    <ul>
+        @foreach (var message in messages)
+        {
+            <li>@message</li>
+        }
+    </ul>
+}
+
+<input @onchange="InputChanged" />
+<p>@inputValue</p>
+
+<input @bind="inputValue" />
+<br>
+<button @onclick="() => inputValue = string.Empty">Clear</button>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click Counter</button>
+<button class="btn btn-primary" @onclick="() => currentCount++">Click Counter lambda</button>
+@code {
+    private string inputValue = string.Empty;
+    private int currentCount = 0;
+    private List<string> messages = new List<string>() { "Hello, world!", "Donghun lee web site" };
+
+    [Parameter]
+    public int IncrementCounter {get; set;} = 1;
+
+    private void IncrementCount()
+    {
+        currentCount += IncrementCounter;
+    }
+
+    void InputChanged(ChangeEventArgs e)
+    {
+        inputValue = e.Value.ToString();
+    }
+}
