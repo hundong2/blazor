@@ -10,6 +10,49 @@ Blazor web application
 - run program
     - `dotnet bin/Release/net7.0/publish/BlazorAppLee.dll`
   
+## docker 
+
+- build blazorapp 
+
+```
+docker build -t blazorapp .
+```
+
+- docker run 
+
+```
+docker run -it -p 5001:5001 blazorapp
+```
+
+```
+docker run -d -p 5001:5001 blazorapp
+```
+
+## docker compose
+
+- install docker-compose
+
+```sh
+sudo apt install docker-compose -y 
+```
+
+- build 
+
+```sh
+docker-compose build
+```
+
+- run
+
+```sh
+docker-compose up
+```
+
+- build & run 
+
+```sh
+docker-compose up --build
+```
 
 ## setting 
 
@@ -25,3 +68,5 @@ https://learn.microsoft.com/ko-kr/training/paths/aspnet-core-minimal-api/
 https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0
 https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0
 https://www.youtube.com/watch?v=bXK-F-uL7Qo
+### docker reference ( compose up )
+https://docs.docker.com/reference/cli/docker/compose/up/
