@@ -87,3 +87,6 @@ https://learn.microsoft.com/ko-kr/training/paths/aspnet-core-minimal-api/ https:
 ## Daily note
 
 > 2024-11-11 https://learn.microsoft.com/ko-kr/aspnet/core/razor-pages/?view=aspnetcore-8.0&tabs=visual-studio
+>> https://learn.microsoft.com/ko-kr/aspnet/core/razor-pages/?view=aspnetcore-8.0&tabs=visual-studio
+
+
