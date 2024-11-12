@@ -90,3 +90,13 @@ https://learn.microsoft.com/ko-kr/training/paths/aspnet-core-minimal-api/ https:
 >> https://learn.microsoft.com/ko-kr/aspnet/core/razor-pages/?view=aspnetcore-8.0&tabs=visual-studio
 
 
+## Blazor Study 
+
+https://blazor-university.com/overview/what-is-blazor/
+https://github.com/IEvangelist/learning-blazor
+https://forum.dotnetdev.kr/t/blazor/5253/13
+https://learn.microsoft.com/ko-kr/training/modules/build-blazor-todo-list/2-data-binding
+
+## ETC Freecodecamp
+
+https://www.freecodecamp.org/learn/project-euler/project-euler-problems-1-to-100/problem-1-multiples-of-3-or-5
