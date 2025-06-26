@@ -1,0 +1,20 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits BlazorAppLee.JsonPuzzleEditor.Components.PuzzlePieces.PuzzlePieceBase
+
+<div class="string-piece-content">
+    <div class="piece-label">String</div>
+    <input @bind="StringPieceModel.Value" 
+           @bind:event="oninput"
+           placeholder="Enter text..."
+           class="piece-input" />
+</div>
+
+@code {
+    [Parameter] public JsonStringPiece StringPieceModel { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Piece = StringPieceModel;
+        base.OnInitialized();
+    }
+}

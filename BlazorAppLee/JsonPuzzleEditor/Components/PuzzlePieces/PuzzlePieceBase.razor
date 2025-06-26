@@ -1,0 +1,45 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits Microsoft.AspNetCore.Components.ComponentBase
+
+<div class="puzzle-piece puzzle-piece--@(Piece.Type.ToString().ToLower())"
+     style="--x: @(Piece.X)px; --y: @(Piece.Y)px"
+     @onpointerdown="OnPointerDown"
+     @onpointerup="OnPointerUp">
+    
+    @if (Piece.InputPoints.Any())
+    {
+        @foreach (var point in Piece.InputPoints)
+        {
+            <div class="connection-point connection-point--input"></div>
+        }
+    }
+    
+    <div class="piece-content">
+        @ChildContent
+    </div>
+    
+    @if (Piece.OutputPoints.Any())
+    {
+        @foreach (var point in Piece.OutputPoints)
+        {
+            <div class="connection-point connection-point--output"></div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public PuzzlePiece Piece { get; set; } = null!;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceSelected { get; set; }
+    
+    private void OnPointerDown(PointerEventArgs e)
+    {
+        Piece.IsDragging = true;
+        OnPieceSelected.InvokeAsync(Piece);
+    }
+    
+    private void OnPointerUp(PointerEventArgs e)
+    {
+        Piece.IsDragging = false;
+    }
+}

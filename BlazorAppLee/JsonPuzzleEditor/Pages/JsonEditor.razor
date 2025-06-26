@@ -1,0 +1,109 @@
+@page "/json-editor"
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+@using BlazorAppLee.JsonPuzzleEditor.Components.PuzzlePieces
+@inject DragDropService DragDropService
+@inject JsonBuilderService JsonBuilderService
+
+<PageTitle>JSON Puzzle Editor</PageTitle>
+
+<div class="json-editor-container">
+    
+    <!-- Toolbox -->
+    <div class="toolbox">
+        <h3>Puzzle Pieces</h3>
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.JsonObject)">
+            📦 Object
+        </div>
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.JsonArray)">
+            📋 Array
+        </div>
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.StringValue)">
+            📝 String
+        </div>
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.NumberValue)">
+            🔢 Number
+        </div>
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.BooleanValue)">
+            ☑️ Boolean
+        </div>
+    </div>
+    
+    <!-- Canvas -->
+    <div class="puzzle-canvas">
+        @foreach (var piece in _pieces)
+        {
+            @if (piece is JsonStringPiece stringPiece)
+            {
+                <StringPiece StringPieceModel="stringPiece" OnPieceSelected="OnPieceSelected" />
+            }
+            else if (piece is JsonNumberPiece numberPiece)
+            {
+                <NumberPiece NumberPieceModel="numberPiece" OnPieceSelected="OnPieceSelected" />
+            }
+            else
+            {
+                <PuzzlePieceBase Piece="piece" OnPieceSelected="OnPieceSelected">
+                    <div class="piece-label">@piece.Type.ToString()</div>
+                </PuzzlePieceBase>
+            }
+        }
+    </div>
+    
+    <!-- JSON Preview -->
+    <div class="json-preview">
+        <h3>JSON Output</h3>
+        <pre>@_jsonOutput</pre>
+        <button class="btn btn-primary mt-2" @onclick="UpdateJsonOutput">Refresh JSON</button>
+    </div>
+    
+</div>
+
+@code {
+    private List<PuzzlePiece> _pieces = new();
+    private string _jsonOutput = "{}";
+    
+    protected override void OnInitialized()
+    {
+        UpdateJsonOutput();
+    }
+    
+    private void AddPiece(PuzzlePieceType type)
+    {
+        var piece = CreatePiece(type);
+        piece.X = 100 + (_pieces.Count * 150) % 500;
+        piece.Y = 100 + (_pieces.Count / 3) * 100;
+        _pieces.Add(piece);
+        UpdateJsonOutput();
+        StateHasChanged();
+    }
+    
+    private PuzzlePiece CreatePiece(PuzzlePieceType type)
+    {
+        return type switch
+        {
+            PuzzlePieceType.JsonObject => new JsonObjectPiece(),
+            PuzzlePieceType.JsonArray => new JsonArrayPiece(), 
+            PuzzlePieceType.StringValue => new JsonStringPiece(),
+            PuzzlePieceType.NumberValue => new JsonNumberPiece(),
+            PuzzlePieceType.BooleanValue => new JsonBooleanPiece(),
+            _ => new JsonStringPiece()
+        };
+    }
+    
+    private void OnPieceSelected(PuzzlePiece piece)
+    {
+        // Handle piece selection
+        foreach (var p in _pieces)
+        {
+            p.IsSelected = p.Id == piece.Id;
+        }
+        StateHasChanged();
+    }
+    
+    private void UpdateJsonOutput()
+    {
+        _jsonOutput = JsonBuilderService.BuildJson(_pieces);
+        StateHasChanged();
+    }
+}
