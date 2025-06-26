@@ -1,0 +1,26 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits PuzzlePieceBase
+
+<div class="piece-content">
+    <div class="piece-label" style="font-size: 10px; margin-bottom: 4px;">Property</div>
+    <input class="piece-input" 
+           @bind="PropertyPiece.Key" 
+           @bind:event="oninput"
+           placeholder="key"
+           maxlength="20"
+           style="margin-bottom: 2px;" />
+    <div style="font-size: 9px; color: rgba(255,255,255,0.8);">key : value</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Models.JsonPropertyPiece PropertyPiece { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        if (PropertyPiece != null)
+        {
+            Piece = PropertyPiece;
+        }
+        base.OnInitialized();
+    }
+}

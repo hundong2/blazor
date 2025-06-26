@@ -1,0 +1,160 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+@using BlazorAppLee.JsonPuzzleEditor.Components.PuzzlePieces
+@using BlazorAppLee.JsonPuzzleEditor.Components.Canvas
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+
+<div id="@CanvasId" class="puzzle-canvas" @onclick="HandleCanvasClick">
+    @* Render connection lines *@
+    @foreach (var connection in JsonStructure.Connections)
+    {
+        <ConnectionLine Connection="@connection" />
+    }
+
+    @* Render puzzle pieces *@
+    @foreach (var piece in JsonStructure.Pieces)
+    {
+        @switch (piece)
+        {
+            case Models.JsonObjectPiece objectPiece:
+                <JsonObjectPiece ObjectPiece="@objectPiece" />
+                break;
+            case Models.JsonArrayPiece arrayPiece:
+                <JsonArrayPiece ArrayPiece="@arrayPiece" />
+                break;
+            case Models.JsonPropertyPiece propertyPiece:
+                <JsonPropertyPiece PropertyPiece="@propertyPiece" />
+                break;
+            case Models.JsonValuePiece valuePiece:
+                <JsonValuePiece ValuePiece="@valuePiece" />
+                break;
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public JsonStructure JsonStructure { get; set; } = new();
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceSelected { get; set; }
+    [Parameter] public EventCallback OnCanvasUpdated { get; set; }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] private DragDropService DragDropService { get; set; } = null!;
+
+    private readonly string CanvasId = $"canvas-{Guid.NewGuid():N}";
+    private DotNetObjectReference<PuzzleCanvas>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("puzzleEditor.setupDragEvents", dotNetRef, CanvasId);
+            
+            DragDropService.SetJsonStructure(JsonStructure);
+            DragDropService.PiecePositionChanged += OnPiecePositionChanged;
+            DragDropService.CanvasUpdated += OnCanvasUpdatedInternal;
+        }
+    }
+
+    private async Task HandleCanvasClick(MouseEventArgs e)
+    {
+        // Deselect all pieces when clicking on empty canvas
+        DragDropService.DeselectAll();
+        await OnCanvasUpdated.InvokeAsync();
+    }
+
+    private async Task HandlePieceSelected(PuzzlePiece piece)
+    {
+        DragDropService.SelectPiece(piece);
+        await OnPieceSelected.InvokeAsync(piece);
+    }
+
+    private async Task HandlePointerPressed((double X, double Y) position)
+    {
+        // This will be handled by the JavaScript drag events
+        await Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public async Task OnPointerDown(string pieceId, double x, double y)
+    {
+        var piece = JsonStructure.FindPiece(pieceId);
+        if (piece != null)
+        {
+            await DragDropService.StartDrag(piece, x, y);
+            await OnCanvasUpdated.InvokeAsync();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnPointerMove(double x, double y)
+    {
+        await DragDropService.UpdateDrag(x, y);
+        UpdateConnections();
+        await OnCanvasUpdated.InvokeAsync();
+    }
+
+    [JSInvokable]
+    public async Task OnPointerUp()
+    {
+        await DragDropService.EndDrag();
+        await OnCanvasUpdated.InvokeAsync();
+    }
+
+    private void OnPiecePositionChanged(PuzzlePiece piece)
+    {
+        UpdateConnections();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCanvasUpdatedInternal()
+    {
+        InvokeAsync(async () =>
+        {
+            await OnCanvasUpdated.InvokeAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateConnections()
+    {
+        foreach (var connection in JsonStructure.Connections)
+        {
+            var fromPoint = JsonStructure.FindConnectionPoint(connection.FromPointId);
+            var toPoint = JsonStructure.FindConnectionPoint(connection.ToPointId);
+
+            if (fromPoint != null && toPoint != null)
+            {
+                connection.FromX = fromPoint.X;
+                connection.FromY = fromPoint.Y;
+                connection.ToX = toPoint.X;
+                connection.ToY = toPoint.Y;
+            }
+        }
+    }
+
+    public void AddPiece(PuzzlePiece piece)
+    {
+        JsonStructure.AddPiece(piece);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void RemovePiece(string pieceId)
+    {
+        JsonStructure.RemovePiece(pieceId);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (dotNetRef != null)
+        {
+            await JSRuntime.InvokeVoidAsync("puzzleEditor.cleanup", CanvasId);
+            dotNetRef.Dispose();
+        }
+
+        DragDropService.PiecePositionChanged -= OnPiecePositionChanged;
+        DragDropService.CanvasUpdated -= OnCanvasUpdatedInternal;
+    }
+}

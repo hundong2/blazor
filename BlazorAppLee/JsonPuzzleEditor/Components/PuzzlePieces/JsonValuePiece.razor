@@ -1,0 +1,109 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits PuzzlePieceBase
+
+<div class="piece-content">
+    <div class="piece-label" style="font-size: 9px; margin-bottom: 3px;">@GetValueTypeLabel()</div>
+    @if (ValuePiece.ValueType == Models.JsonValueType.String)
+    {
+        <input class="piece-input" 
+               @bind="stringValue" 
+               @bind:event="oninput"
+               placeholder="text"
+               maxlength="15"
+               style="font-size: 10px;" />
+    }
+    else if (ValuePiece.ValueType == Models.JsonValueType.Number)
+    {
+        <input class="piece-input" 
+               type="number"
+               @bind="numberValue" 
+               @bind:event="oninput"
+               placeholder="0"
+               style="font-size: 10px;" />
+    }
+    else if (ValuePiece.ValueType == Models.JsonValueType.Boolean)
+    {
+        <select class="piece-input" @bind="boolValue" style="font-size: 10px;">
+            <option value="true">true</option>
+            <option value="false">false</option>
+        </select>
+    }
+    else
+    {
+        <div style="font-size: 10px; color: rgba(255,255,255,0.9);">null</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Models.JsonValuePiece ValuePiece { get; set; } = null!;
+
+    private string stringValue = "";
+    private decimal numberValue = 0;
+    private string boolValue = "false";
+
+    protected override void OnInitialized()
+    {
+        if (ValuePiece != null)
+        {
+            Piece = ValuePiece;
+            UpdateLocalValues();
+        }
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        UpdateLocalValues();
+    }
+
+    private void UpdateLocalValues()
+    {
+        if (ValuePiece?.Value != null)
+        {
+            switch (ValuePiece.ValueType)
+            {
+                case Models.JsonValueType.String:
+                    stringValue = ValuePiece.Value.ToString() ?? "";
+                    break;
+                case Models.JsonValueType.Number:
+                    if (decimal.TryParse(ValuePiece.Value.ToString(), out var num))
+                        numberValue = num;
+                    break;
+                case Models.JsonValueType.Boolean:
+                    boolValue = ValuePiece.Value.ToString()?.ToLower() ?? "false";
+                    break;
+            }
+        }
+    }
+
+    private void UpdateValue()
+    {
+        switch (ValuePiece.ValueType)
+        {
+            case Models.JsonValueType.String:
+                ValuePiece.Value = stringValue;
+                break;
+            case Models.JsonValueType.Number:
+                ValuePiece.Value = numberValue;
+                break;
+            case Models.JsonValueType.Boolean:
+                ValuePiece.Value = bool.Parse(boolValue);
+                break;
+            case Models.JsonValueType.Null:
+                ValuePiece.Value = null;
+                break;
+        }
+    }
+
+    private string GetValueTypeLabel()
+    {
+        return ValuePiece.ValueType switch
+        {
+            Models.JsonValueType.String => "String",
+            Models.JsonValueType.Number => "Number",
+            Models.JsonValueType.Boolean => "Boolean",
+            Models.JsonValueType.Null => "Null",
+            _ => "Value"
+        };
+    }
+}

@@ -1,0 +1,24 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits PuzzlePieceBase
+
+<div class="piece-content">
+    <div class="piece-icon">&#91;&#93;</div>
+    <div class="piece-label">Array</div>
+    @if (ArrayPiece.ElementIds.Any())
+    {
+        <div class="piece-info">@ArrayPiece.ElementIds.Count elements</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Models.JsonArrayPiece ArrayPiece { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        if (ArrayPiece != null)
+        {
+            Piece = ArrayPiece;
+        }
+        base.OnInitialized();
+    }
+}

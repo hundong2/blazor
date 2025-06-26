@@ -1,0 +1,27 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+
+<svg class="connection-line" width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+    <path class="connection-path" d="@PathData" />
+</svg>
+
+@code {
+    [Parameter, EditorRequired] public Connection Connection { get; set; } = null!;
+
+    private string PathData => CreatePath();
+
+    private string CreatePath()
+    {
+        var fromX = Connection.FromX;
+        var fromY = Connection.FromY;
+        var toX = Connection.ToX;
+        var toY = Connection.ToY;
+
+        var dx = toX - fromX;
+        var cp1x = fromX + Math.Abs(dx) * 0.5;
+        var cp1y = fromY;
+        var cp2x = toX - Math.Abs(dx) * 0.5;
+        var cp2y = toY;
+
+        return $"M {fromX} {fromY} C {cp1x} {cp1y}, {cp2x} {cp2y}, {toX} {toY}";
+    }
+}

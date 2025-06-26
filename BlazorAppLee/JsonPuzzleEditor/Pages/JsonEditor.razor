@@ -1,0 +1,234 @@
+@page "/json-editor"
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+@using BlazorAppLee.JsonPuzzleEditor.Components.Canvas
+@using BlazorAppLee.JsonPuzzleEditor.Components.Toolbox
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+
+<PageTitle>JSON Puzzle Editor</PageTitle>
+
+<div class="json-editor-container">
+    <h1 class="mb-4">JSON Puzzle Editor</h1>
+    
+    <div class="editor-layout">
+        <PieceToolbox OnPieceCreated="@HandlePieceCreated"
+                     OnCanvasClear="@HandleCanvasClear"
+                     ShowGrid="@showGrid"
+                     OnGridToggle="@HandleGridToggle" />
+        
+        <div class="canvas-container">
+            <PuzzleCanvas @ref="puzzleCanvas"
+                         JsonStructure="@jsonStructure"
+                         OnPieceSelected="@HandlePieceSelected"
+                         OnCanvasUpdated="@HandleCanvasUpdated" />
+        </div>
+        
+        <div class="json-preview">
+            <div class="json-preview-title d-flex justify-content-between align-items-center">
+                <span>JSON Output</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" @onclick="RefreshJson">
+                        <i class="oi oi-reload"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="CopyToClipboard">
+                        <i class="oi oi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="json-output @(hasError ? "json-error" : "")">@currentJson</div>
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="mt-2 text-sm text-info">@statusMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .json-editor-container {
+        padding: 20px;
+    }
+    
+    .editor-layout {
+        position: relative;
+        height: 600px;
+    }
+    
+    .canvas-container {
+        margin-left: 220px;
+        margin-right: 320px;
+        height: 100%;
+    }
+</style>
+
+@code {
+    [Inject] private JsonBuilderService JsonBuilderService { get; set; } = null!;
+    [Inject] private DragDropService DragDropService { get; set; } = null!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+
+    private JsonStructure jsonStructure = new();
+    private PuzzleCanvas? puzzleCanvas;
+    private string currentJson = "{}";
+    private bool hasError = false;
+    private string statusMessage = "";
+    private bool showGrid = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        JsonBuilderService.SetJsonStructure(jsonStructure);
+        JsonBuilderService.JsonUpdated += OnJsonUpdated;
+        JsonBuilderService.ErrorOccurred += OnJsonError;
+        
+        await JSRuntime.InvokeVoidAsync("puzzleEditor.init");
+        
+        // Create initial example pieces
+        CreateInitialExample();
+    }
+
+    private void CreateInitialExample()
+    {
+        var objectPiece = new Models.JsonObjectPiece { X = 200, Y = 150 };
+        var propertyPiece = new Models.JsonPropertyPiece { X = 400, Y = 100, Key = "name" };
+        var stringPiece = new Models.JsonValuePiece(Models.JsonValueType.String) { X = 600, Y = 100, Value = "John Doe" };
+        
+        jsonStructure.AddPiece(objectPiece);
+        jsonStructure.AddPiece(propertyPiece);
+        jsonStructure.AddPiece(stringPiece);
+        
+        // Add a connection example (this would normally be done through UI)
+        var objectOutput = objectPiece.OutputPoints.First();
+        var propertyInput = propertyPiece.InputPoints.First(p => p.Label == "Object");
+        var propertyValueInput = propertyPiece.InputPoints.First(p => p.Label == "Value");
+        var stringOutput = stringPiece.OutputPoints.First();
+        
+        jsonStructure.AddConnection(new Models.Connection
+        {
+            FromPieceId = objectPiece.Id,
+            FromPointId = objectOutput.Id,
+            ToPieceId = propertyPiece.Id,
+            ToPointId = propertyInput.Id
+        });
+        
+        jsonStructure.AddConnection(new Models.Connection
+        {
+            FromPieceId = stringPiece.Id,
+            FromPointId = stringOutput.Id,
+            ToPieceId = propertyPiece.Id,
+            ToPointId = propertyValueInput.Id
+        });
+        
+        UpdateJson();
+    }
+
+    private async Task HandlePieceCreated(PuzzlePiece piece)
+    {
+        if (puzzleCanvas != null)
+        {
+            puzzleCanvas.AddPiece(piece);
+            await JSRuntime.InvokeVoidAsync("puzzleEditor.animatePieceCreation", piece.Id);
+            UpdateJson();
+        }
+    }
+
+    private async Task HandleCanvasClear()
+    {
+        jsonStructure.Pieces.Clear();
+        jsonStructure.Connections.Clear();
+        currentJson = "{}";
+        statusMessage = "Canvas cleared";
+        
+        if (puzzleCanvas != null)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        
+        // Clear status message after 2 seconds
+        _ = Task.Delay(2000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            statusMessage = "";
+            StateHasChanged();
+        }));
+    }
+
+    private async Task HandleGridToggle(bool show)
+    {
+        showGrid = show;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandlePieceSelected(PuzzlePiece piece)
+    {
+        statusMessage = $"Selected: {piece.Type}";
+        await InvokeAsync(StateHasChanged);
+        
+        // Clear status message after 1 second
+        _ = Task.Delay(1000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            statusMessage = "";
+            StateHasChanged();
+        }));
+    }
+
+    private async Task HandleCanvasUpdated()
+    {
+        UpdateJson();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateJson()
+    {
+        currentJson = JsonBuilderService.BuildJson();
+    }
+
+    private async Task RefreshJson()
+    {
+        UpdateJson();
+        statusMessage = "JSON refreshed";
+        
+        // Clear status message after 1 second
+        _ = Task.Delay(1000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            statusMessage = "";
+            StateHasChanged();
+        }));
+    }
+
+    private async Task CopyToClipboard()
+    {
+        var success = await JSRuntime.InvokeAsync<bool>("puzzleEditor.copyToClipboard", currentJson);
+        statusMessage = success ? "JSON copied to clipboard" : "Failed to copy JSON";
+        
+        // Clear status message after 2 seconds
+        _ = Task.Delay(2000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            statusMessage = "";
+            StateHasChanged();
+        }));
+    }
+
+    private void OnJsonUpdated(string json)
+    {
+        currentJson = json;
+        hasError = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnJsonError(string error)
+    {
+        currentJson = error;
+        hasError = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        JsonBuilderService.JsonUpdated -= OnJsonUpdated;
+        JsonBuilderService.ErrorOccurred -= OnJsonError;
+        
+        if (puzzleCanvas != null)
+        {
+            await puzzleCanvas.DisposeAsync();
+        }
+    }
+}

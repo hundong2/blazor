@@ -1,0 +1,81 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+
+<div class="piece-toolbox">
+    <div class="toolbox-title">Puzzle Pieces</div>
+    
+    <div class="toolbox-section">
+        <div class="toolbox-section-title">Containers</div>
+        <div class="toolbox-piece json-object" @onclick="() => CreatePiece(PuzzlePieceType.JsonObject)">
+            <span>&#123;&#125; Object</span>
+        </div>
+        <div class="toolbox-piece json-array" @onclick="() => CreatePiece(PuzzlePieceType.JsonArray)">
+            <span>&#91;&#93; Array</span>
+        </div>
+        <div class="toolbox-piece json-property" @onclick="() => CreatePiece(PuzzlePieceType.JsonProperty)">
+            <span>Property</span>
+        </div>
+    </div>
+    
+    <div class="toolbox-section">
+        <div class="toolbox-section-title">Values</div>
+        <div class="toolbox-piece json-string" @onclick="() => CreatePiece(PuzzlePieceType.JsonString)">
+            <span>String</span>
+        </div>
+        <div class="toolbox-piece json-number" @onclick="() => CreatePiece(PuzzlePieceType.JsonNumber)">
+            <span>Number</span>
+        </div>
+        <div class="toolbox-piece json-boolean" @onclick="() => CreatePiece(PuzzlePieceType.JsonBoolean)">
+            <span>Boolean</span>
+        </div>
+        <div class="toolbox-piece json-null" @onclick="() => CreatePiece(PuzzlePieceType.JsonNull)">
+            <span>Null</span>
+        </div>
+    </div>
+    
+    <div class="toolbox-section">
+        <div class="toolbox-section-title">Actions</div>
+        <button class="btn btn-sm btn-outline-secondary w-100 mb-2" @onclick="ClearCanvas">
+            Clear All
+        </button>
+        <button class="btn btn-sm btn-outline-primary w-100" @onclick="ToggleGrid">
+            @(ShowGrid ? "Hide" : "Show") Grid
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceCreated { get; set; }
+    [Parameter] public EventCallback OnCanvasClear { get; set; }
+    [Parameter] public bool ShowGrid { get; set; } = true;
+    [Parameter] public EventCallback<bool> OnGridToggle { get; set; }
+
+    [Inject] private DragDropService DragDropService { get; set; } = null!;
+
+    private int pieceCounter = 0;
+
+    private async Task CreatePiece(PuzzlePieceType type)
+    {
+        // Create piece at a staggered position to avoid overlap
+        var x = 100 + (pieceCounter % 5) * 60;
+        var y = 100 + (pieceCounter / 5) * 100;
+        pieceCounter++;
+
+        var piece = DragDropService.CreatePieceFromTemplate(type, x, y);
+        if (piece != null)
+        {
+            await OnPieceCreated.InvokeAsync(piece);
+        }
+    }
+
+    private async Task ClearCanvas()
+    {
+        pieceCounter = 0;
+        await OnCanvasClear.InvokeAsync();
+    }
+
+    private async Task ToggleGrid()
+    {
+        await OnGridToggle.InvokeAsync(!ShowGrid);
+    }
+}

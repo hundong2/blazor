@@ -1,0 +1,87 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+@inherits ComponentBase
+@implements IDisposable
+
+<div id="@Piece.Id" 
+     class="puzzle-piece @GetPieceTypeClass() @(Piece.IsSelected ? "selected" : "") @(Piece.IsDragging ? "dragging" : "")"
+     style="transform: translate(@(Piece.X)px, @(Piece.Y)px); width: @(Piece.Width)px; height: @(Piece.Height)px;"
+     @onpointerdown="HandlePointerDown"
+     @onclick="HandleClick">
+    
+    @ChildContent
+    
+    @* Render connection points *@
+    @foreach (var inputPoint in Piece.InputPoints)
+    {
+        <div class="connection-point input @(inputPoint.IsConnected ? "connected" : "")"
+             style="top: 50%; transform: translateY(-50%);"
+             data-point-id="@inputPoint.Id"
+             title="@inputPoint.Label">
+        </div>
+    }
+    
+    @foreach (var outputPoint in Piece.OutputPoints)
+    {
+        <div class="connection-point output @(outputPoint.IsConnected ? "connected" : "")"
+             style="top: 50%; transform: translateY(-50%);"
+             data-point-id="@outputPoint.Id"
+             title="@outputPoint.Label">
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PuzzlePiece Piece { get; set; } = null!;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceSelected { get; set; }
+    [Parameter] public EventCallback<(double X, double Y)> OnPointerPressed { get; set; }
+
+    [Inject] private DragDropService DragDropService { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        if (Piece != null)
+        {
+            Piece.PropertyChanged += OnPiecePropertyChanged;
+        }
+    }
+
+    private void OnPiecePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandlePointerDown(PointerEventArgs e)
+    {
+        await OnPointerPressed.InvokeAsync((e.ClientX, e.ClientY));
+    }
+
+    private async Task HandleClick()
+    {
+        await OnPieceSelected.InvokeAsync(Piece);
+    }
+
+    private string GetPieceTypeClass()
+    {
+        return Piece.Type switch
+        {
+            PuzzlePieceType.JsonObject => "json-object",
+            PuzzlePieceType.JsonArray => "json-array",
+            PuzzlePieceType.JsonProperty => "json-property",
+            PuzzlePieceType.JsonString => "json-string",
+            PuzzlePieceType.JsonNumber => "json-number",
+            PuzzlePieceType.JsonBoolean => "json-boolean",
+            PuzzlePieceType.JsonNull => "json-null",
+            _ => ""
+        };
+    }
+
+    public void Dispose()
+    {
+        if (Piece != null)
+        {
+            Piece.PropertyChanged -= OnPiecePropertyChanged;
+        }
+    }
+}

@@ -1,0 +1,320 @@
+/* JSON Puzzle Editor Styles */
+
+/* Canvas */
+.puzzle-canvas {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: 
+        linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Puzzle Pieces */
+.puzzle-piece {
+    position: absolute;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: move;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.puzzle-piece:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.puzzle-piece.selected {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.25);
+}
+
+.puzzle-piece.dragging {
+    z-index: 1000;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+
+/* Piece Types */
+.puzzle-piece.json-object {
+    background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+    color: white;
+    border-color: #5a32a3;
+}
+
+.puzzle-piece.json-array {
+    background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
+    color: white;
+    border-color: #c2185b;
+}
+
+.puzzle-piece.json-property {
+    background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+    color: white;
+    border-color: #1976d2;
+}
+
+.puzzle-piece.json-string {
+    background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+    color: white;
+    border-color: #388e3c;
+}
+
+.puzzle-piece.json-number {
+    background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+    color: white;
+    border-color: #f57c00;
+}
+
+.puzzle-piece.json-boolean {
+    background: linear-gradient(135deg, #ff5722 0%, #ff8a65 100%);
+    color: white;
+    border-color: #d84315;
+}
+
+.puzzle-piece.json-null {
+    background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%);
+    color: white;
+    border-color: #455a64;
+}
+
+/* Connection Points */
+.connection-point {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #6c757d;
+    cursor: crosshair;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.connection-point:hover {
+    width: 16px;
+    height: 16px;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13,110,253,0.25);
+}
+
+.connection-point.input {
+    left: -6px;
+    background: #28a745;
+    border-color: #1e7e34;
+}
+
+.connection-point.output {
+    right: -6px;
+    background: #dc3545;
+    border-color: #bd2130;
+}
+
+.connection-point.connected {
+    background: #0d6efd;
+    border-color: #0842a0;
+}
+
+/* Connection Lines */
+.connection-line {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.connection-path {
+    fill: none;
+    stroke: #6c757d;
+    stroke-width: 2;
+    transition: stroke 0.2s ease;
+}
+
+.connection-path:hover {
+    stroke: #0d6efd;
+    stroke-width: 3;
+}
+
+/* Toolbox */
+.piece-toolbox {
+    position: fixed;
+    top: 100px;
+    left: 20px;
+    width: 200px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 16px;
+    z-index: 100;
+}
+
+.toolbox-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #495057;
+    text-align: center;
+}
+
+.toolbox-section {
+    margin-bottom: 16px;
+}
+
+.toolbox-section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.toolbox-piece {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.toolbox-piece:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.toolbox-piece:active {
+    cursor: grabbing;
+}
+
+/* JSON Preview */
+.json-preview {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 16px;
+    z-index: 100;
+}
+
+.json-preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #495057;
+}
+
+.json-output {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 12px;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Editable Fields */
+.piece-input {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin: 4px 0;
+    font-size: 11px;
+    width: 80%;
+    text-align: center;
+}
+
+.piece-input:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.8);
+    background: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .piece-toolbox {
+        width: 160px;
+        left: 10px;
+    }
+    
+    .json-preview {
+        width: 250px;
+        right: 10px;
+        height: 300px;
+    }
+    
+    .puzzle-canvas {
+        height: 400px;
+    }
+    
+    .toolbox-piece {
+        height: 35px;
+        font-size: 10px;
+    }
+}
+
+/* Animation for piece creation */
+@keyframes pieceCreate {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.puzzle-piece.new {
+    animation: pieceCreate 0.3s ease-out;
+}
+
+/* Loading state */
+.canvas-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Error states */
+.json-error {
+    color: #dc3545;
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
