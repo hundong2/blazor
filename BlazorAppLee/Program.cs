@@ -18,6 +18,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<BlazorAppLee.JsonPuzzleEditor.Services.DragDropService>();
+builder.Services.AddScoped<BlazorAppLee.JsonPuzzleEditor.Services.JsonBuilderService>();
 builder.Services.AddAntiforgery(); // Add Antiforgery services
 
 var app = builder.Build();

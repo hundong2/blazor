@@ -1,0 +1,111 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div id="@($"piece-{Piece.Id}")" 
+     class="puzzle-piece puzzle-piece--@(Piece.Type.ToString().ToLower()) @(Piece.IsSelected ? "selected" : "")"
+     style="--x: @(Piece.X)px; --y: @(Piece.Y)px"
+     data-piece-id="@Piece.Id"
+     @onpointerdown="OnPointerDown"
+     @onpointerdown:preventDefault="true">
+    
+    @if (Piece.InputPoints.Any())
+    {
+        <div class="connection-points connection-points--input">
+            @foreach (var point in Piece.InputPoints)
+            {
+                <div class="connection-point connection-point--input" 
+                     data-connection-id="@point.Id"></div>
+            }
+        </div>
+    }
+    
+    <div class="piece-content">
+        @if (Piece is JsonStringPiece stringPiece)
+        {
+            <div class="piece-header">📝 String</div>
+            <input type="text" @bind="stringPiece.Value" @onclick:stopPropagation="true" 
+                   class="piece-input" placeholder="Enter text..." />
+        }
+        else if (Piece is JsonNumberPiece numberPiece)
+        {
+            <div class="piece-header">🔢 Number</div>
+            <input type="number" @bind="numberPiece.Value" @onclick:stopPropagation="true" 
+                   class="piece-input" placeholder="0" />
+        }
+        else if (Piece is JsonObjectPiece)
+        {
+            <div class="piece-header">📦 Object</div>
+            <div class="piece-body">{...}</div>
+        }
+        else if (Piece is JsonArrayPiece)
+        {
+            <div class="piece-header">📋 Array</div>
+            <div class="piece-body">[...]</div>
+        }
+        else
+        {
+            @ChildContent
+        }
+    </div>
+    
+    @if (Piece.OutputPoints.Any())
+    {
+        <div class="connection-points connection-points--output">
+            @foreach (var point in Piece.OutputPoints)
+            {
+                <div class="connection-point connection-point--output" 
+                     data-connection-id="@point.Id"></div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public PuzzlePiece Piece { get; set; } = null!;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceSelected { get; set; }
+    [Parameter] public EventCallback<(string PieceId, double X, double Y)> OnPiecePositionChanged { get; set; }
+    
+    private IJSObjectReference? _jsModule;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/dragdrop.js");
+        }
+    }
+    
+    private async Task OnPointerDown(PointerEventArgs e)
+    {
+        Piece.IsSelected = true;
+        await OnPieceSelected.InvokeAsync(Piece);
+        
+        if (_jsModule != null)
+        {
+            await _jsModule.InvokeVoidAsync("puzzleEditor.startDrag", 
+                $"piece-{Piece.Id}", e.ClientX, e.ClientY);
+        }
+    }
+    
+    [JSInvokable]
+    public async Task UpdatePiecePosition(string pieceId, double x, double y)
+    {
+        if (pieceId == Piece.Id)
+        {
+            Piece.X = x;
+            Piece.Y = y;
+            await OnPiecePositionChanged.InvokeAsync((pieceId, x, y));
+            StateHasChanged();
+        }
+    }
+    
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
+        {
+            await _jsModule.DisposeAsync();
+        }
+    }
+}

@@ -1,0 +1,181 @@
+@page "/json-editor"
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@using BlazorAppLee.JsonPuzzleEditor.Services
+@using BlazorAppLee.JsonPuzzleEditor.Components.PuzzlePieces
+@inject BlazorAppLee.JsonPuzzleEditor.Services.JsonBuilderService JsonBuilder
+@inject IJSRuntime JSRuntime
+
+<PageTitle>JSON Puzzle Editor</PageTitle>
+
+<link href="~/css/puzzle-styles.css" rel="stylesheet" />
+
+<div class="json-editor-container">
+    <!-- Toolbox -->
+    <div class="toolbox">
+        <h3>🧩 Puzzle Pieces</h3>
+        
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.JsonObject)">
+            <span>📦 Object</span>
+        </div>
+        
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.JsonArray)">
+            <span>📋 Array</span>
+        </div>
+        
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.StringValue)">
+            <span>📝 String</span>
+        </div>
+        
+        <div class="toolbox-item" @onclick="() => AddPiece(PuzzlePieceType.NumberValue)">
+            <span>🔢 Number</span>
+        </div>
+        
+        <hr />
+        
+        <div class="toolbox-item" @onclick="ClearCanvas" style="background-color: #fee2e2; color: #dc2626;">
+            <span>🗑️ Clear All</span>
+        </div>
+    </div>
+    
+    <!-- Canvas -->
+    <div class="canvas">
+        <div class="canvas-content" @onclick="OnCanvasClick">
+            @foreach (var piece in puzzlePieces)
+            {
+                <PuzzlePieceBase 
+                    Piece="piece"
+                    OnPieceSelected="OnPieceSelected"
+                    OnPiecePositionChanged="OnPiecePositionChanged" />
+            }
+        </div>
+    </div>
+    
+    <!-- JSON Preview -->
+    <div class="json-preview">
+        <h3>📄 JSON Output</h3>
+        <div class="json-output">@jsonOutput</div>
+        
+        <button class="btn btn-primary mt-2" @onclick="GenerateJson">
+            🔄 Refresh JSON
+        </button>
+        
+        <button class="btn btn-secondary mt-2" @onclick="CopyToClipboard">
+            📋 Copy JSON
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<PuzzlePiece> puzzlePieces = new();
+    private string jsonOutput = "{}";
+    private Random random = new Random();
+
+    protected override void OnInitialized()
+    {
+        // Add some initial pieces for demonstration
+        AddPiece(PuzzlePieceType.JsonObject, 100, 100);
+        AddPiece(PuzzlePieceType.StringValue, 150, 250);
+        AddPiece(PuzzlePieceType.NumberValue, 300, 250);
+        
+        GenerateJson();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Set up Blazor reference for JavaScript callback
+            var dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("eval", "window.blazorPuzzleEditor = arguments[0];", dotNetRef);
+        }
+    }
+
+    private void AddPiece(PuzzlePieceType type, double? x = null, double? y = null)
+    {
+        PuzzlePiece piece = type switch
+        {
+            PuzzlePieceType.JsonObject => new JsonObjectPiece(),
+            PuzzlePieceType.JsonArray => new JsonArrayPiece(),
+            PuzzlePieceType.StringValue => new JsonStringPiece(),
+            PuzzlePieceType.NumberValue => new JsonNumberPiece(),
+            _ => throw new ArgumentException($"Unsupported piece type: {type}")
+        };
+
+        // Position pieces randomly if no specific position given
+        piece.X = x ?? random.Next(50, 400);
+        piece.Y = y ?? random.Next(50, 300);
+
+        puzzlePieces.Add(piece);
+        StateHasChanged();
+        
+        // Auto-generate JSON when new piece is added
+        _ = Task.Run(async () => {
+            await Task.Delay(100); // Small delay to let UI update
+            await InvokeAsync(() => GenerateJson());
+        });
+    }
+
+    private void OnPieceSelected(PuzzlePiece selectedPiece)
+    {
+        // Deselect all other pieces
+        foreach (var piece in puzzlePieces)
+        {
+            piece.IsSelected = piece == selectedPiece;
+        }
+        StateHasChanged();
+    }
+
+    private Task OnPiecePositionChanged((string PieceId, double X, double Y) change)
+    {
+        var piece = puzzlePieces.FirstOrDefault(p => p.Id == change.PieceId);
+        if (piece != null)
+        {
+            piece.X = change.X;
+            piece.Y = change.Y;
+            GenerateJson(); // Update JSON when pieces move
+        }
+        return Task.CompletedTask;
+    }
+
+    private void OnCanvasClick()
+    {
+        // Deselect all pieces when clicking on empty canvas
+        foreach (var piece in puzzlePieces)
+        {
+            piece.IsSelected = false;
+        }
+        StateHasChanged();
+    }
+
+    private void GenerateJson()
+    {
+        jsonOutput = JsonBuilder.BuildJson(puzzlePieces);
+        StateHasChanged();
+    }
+
+    private void ClearCanvas()
+    {
+        puzzlePieces.Clear();
+        jsonOutput = "{}";
+        StateHasChanged();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", jsonOutput);
+    }
+
+    [JSInvokable]
+    public Task UpdatePiecePosition(string pieceId, double x, double y)
+    {
+        var piece = puzzlePieces.FirstOrDefault(p => p.Id == pieceId);
+        if (piece != null)
+        {
+            piece.X = x;
+            piece.Y = y;
+            GenerateJson();
+            StateHasChanged();
+        }
+        return Task.CompletedTask;
+    }
+}

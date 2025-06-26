@@ -1,0 +1,227 @@
+/* JSON Puzzle Editor Styles */
+.json-editor-container {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    grid-template-rows: 1fr;
+    height: calc(100vh - 60px);
+    gap: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+}
+
+.toolbox {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.toolbox h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 16px;
+}
+
+.toolbox-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.toolbox-item:hover {
+    background: #e9ecef;
+    border-color: #6c757d;
+}
+
+.canvas {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.canvas-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.json-preview {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.json-preview h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 16px;
+}
+
+.json-output {
+    flex: 1;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+/* Puzzle Pieces */
+.puzzle-piece {
+    position: absolute;
+    transform: translate3d(var(--x, 0px), var(--y, 0px), 0);
+    min-width: 120px;
+    max-width: 180px;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.puzzle-piece:active {
+    cursor: grabbing;
+}
+
+.puzzle-piece--jsonobject {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.puzzle-piece--jsonarray {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.puzzle-piece--stringvalue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.puzzle-piece--numbervalue {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.puzzle-piece.selected {
+    box-shadow: 0 0 0 3px #4f46e5, 0 4px 12px rgba(0,0,0,0.2);
+    transform: translate3d(var(--x, 0px), var(--y, 0px), 0) scale(1.02);
+}
+
+.piece-header {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.piece-body {
+    font-size: 18px;
+    opacity: 0.8;
+    text-align: center;
+}
+
+.piece-input {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    width: 100px;
+    color: #333;
+}
+
+.piece-input:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.8);
+    background: white;
+}
+
+.connection-points {
+    position: absolute;
+}
+
+.connection-points--input {
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.connection-points--output {
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.connection-point {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin: 2px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.connection-point--input {
+    background: #10b981;
+}
+
+.connection-point--output {
+    background: #f59e0b;
+}
+
+.connection-point:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .json-editor-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+    }
+    
+    .toolbox {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 8px;
+    }
+    
+    .toolbox-item {
+        flex-shrink: 0;
+        min-width: 100px;
+        text-align: center;
+        font-size: 12px;
+    }
+    
+    .json-preview {
+        max-height: 200px;
+        font-size: 10px;
+    }
+}
