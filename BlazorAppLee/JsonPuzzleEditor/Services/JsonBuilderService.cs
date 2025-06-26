@@ -34,24 +34,60 @@ namespace BlazorAppLee.JsonPuzzleEditor.Services
 
             if (stringPieces.Any())
             {
-                result["strings"] = stringPieces.Select(p => p.GetValue()).ToArray();
+                if (stringPieces.Count == 1)
+                {
+                    result["textValue"] = stringPieces.First().GetValue();
+                }
+                else
+                {
+                    result["strings"] = stringPieces.Select(p => p.GetValue()).ToArray();
+                }
             }
             
             if (numberPieces.Any())
             {
-                result["numbers"] = numberPieces.Select(p => p.GetValue()).ToArray();
+                if (numberPieces.Count == 1)
+                {
+                    result["numberValue"] = numberPieces.First().GetValue();
+                }
+                else
+                {
+                    result["numbers"] = numberPieces.Select(p => p.GetValue()).ToArray();
+                }
             }
             
             if (booleanPieces.Any())
             {
-                result["booleans"] = booleanPieces.Select(p => p.GetValue()).ToArray();
+                if (booleanPieces.Count == 1)
+                {
+                    result["booleanValue"] = booleanPieces.First().GetValue();
+                }
+                else
+                {
+                    result["booleans"] = booleanPieces.Select(p => p.GetValue()).ToArray();
+                }
+            }
+
+            if (objectPieces.Any())
+            {
+                result["hasObjects"] = objectPieces.Count;
+            }
+
+            if (arrayPieces.Any())
+            {
+                result["hasArrays"] = arrayPieces.Count;
             }
 
             if (result.Count == 0)
             {
-                return new { message = "JSON puzzle editor working!", pieceCount = pieces.Count };
+                return new { 
+                    message = "JSON puzzle editor working!", 
+                    instructions = "Add puzzle pieces from the toolbox to build JSON",
+                    pieceCount = pieces.Count 
+                };
             }
 
+            result["totalPieces"] = pieces.Count;
             return result;
         }
     }

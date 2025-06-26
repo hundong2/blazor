@@ -35,11 +35,15 @@
         {
             @if (piece is JsonStringPiece stringPiece)
             {
-                <StringPiece StringPieceModel="stringPiece" OnPieceSelected="OnPieceSelected" />
+                <StringPiece StringPieceModel="stringPiece" OnPieceSelected="OnPieceSelected" OnValueChangedCallback="UpdateJsonOutput" />
             }
             else if (piece is JsonNumberPiece numberPiece)
             {
-                <NumberPiece NumberPieceModel="numberPiece" OnPieceSelected="OnPieceSelected" />
+                <NumberPiece NumberPieceModel="numberPiece" OnPieceSelected="OnPieceSelected" OnValueChangedCallback="UpdateJsonOutput" />
+            }
+            else if (piece is JsonBooleanPiece booleanPiece)
+            {
+                <BooleanPiece BooleanPieceModel="booleanPiece" OnPieceSelected="OnPieceSelected" OnValueChangedCallback="UpdateJsonOutput" />
             }
             else
             {

@@ -177,7 +177,8 @@
 }
 
 .string-piece-content,
-.number-piece-content {
+.number-piece-content,
+.boolean-piece-content {
     display: flex;
     flex-direction: column;
     gap: 4px;

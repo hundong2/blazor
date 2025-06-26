@@ -1,0 +1,28 @@
+@using BlazorAppLee.JsonPuzzleEditor.Models
+@inherits BlazorAppLee.JsonPuzzleEditor.Components.PuzzlePieces.PuzzlePieceBase
+
+<div class="boolean-piece-content">
+    <div class="piece-label">Boolean</div>
+    <select @bind="BooleanPieceModel.Value" class="piece-input">
+        <option value="true">true</option>
+        <option value="false">false</option>
+    </select>
+</div>
+
+@code {
+    [Parameter] public JsonBooleanPiece BooleanPieceModel { get; set; } = null!;
+    [Parameter] public EventCallback OnValueChangedCallback { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Piece = BooleanPieceModel;
+        BooleanPieceModel.PropertyChanged += async (s, e) =>
+        {
+            if (e.PropertyName == nameof(BooleanPieceModel.Value))
+            {
+                await OnValueChangedCallback.InvokeAsync();
+            }
+        };
+        base.OnInitialized();
+    }
+}

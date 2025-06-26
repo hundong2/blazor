@@ -12,10 +12,18 @@
 
 @code {
     [Parameter] public JsonNumberPiece NumberPieceModel { get; set; } = null!;
+    [Parameter] public EventCallback OnValueChangedCallback { get; set; }
 
     protected override void OnInitialized()
     {
         Piece = NumberPieceModel;
+        NumberPieceModel.PropertyChanged += async (s, e) =>
+        {
+            if (e.PropertyName == nameof(NumberPieceModel.Value))
+            {
+                await OnValueChangedCallback.InvokeAsync();
+            }
+        };
         base.OnInitialized();
     }
 }
