@@ -1,0 +1,245 @@
+@using BlazorAppLee.Models.JsonPuzzle
+@inject IJSRuntime JSRuntime
+
+<div class="puzzle-piece @GetPieceTypeClass() @(Piece.IsSelected ? "selected" : "")" 
+     style="left: @(Piece.Position.X)px; top: @(Piece.Position.Y)px"
+     @ref="pieceElement"
+     @onclick="OnClick"
+     @onmousedown="OnMouseDown"
+     data-piece-id="@Piece.Id">
+     
+    <div class="piece-content">
+        @switch (Piece.Type)
+        {
+            case PuzzleType.Object:
+                <div class="object-piece">
+                    <span class="symbol">{</span>
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key</span>
+                    }
+                    <span class="symbol">}</span>
+                </div>
+                break;
+                
+            case PuzzleType.Array:
+                <div class="array-piece">
+                    <span class="symbol">[</span>
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key</span>
+                    }
+                    <span class="symbol">]</span>
+                </div>
+                break;
+                
+            case PuzzleType.String:
+                <div class="value-piece">
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key:</span>
+                    }
+                    <span class="value">"@(Piece.Value ?? "text")"</span>
+                </div>
+                break;
+                
+            case PuzzleType.Number:
+                <div class="value-piece">
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key:</span>
+                    }
+                    <span class="value">@(Piece.Value ?? 0)</span>
+                </div>
+                break;
+                
+            case PuzzleType.Boolean:
+                <div class="value-piece">
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key:</span>
+                    }
+                    <span class="value">@(Piece.Value?.ToString()?.ToLower() ?? "false")</span>
+                </div>
+                break;
+                
+            case PuzzleType.Null:
+                <div class="value-piece">
+                    @if (!string.IsNullOrEmpty(Piece.Key))
+                    {
+                        <span class="key">@Piece.Key:</span>
+                    }
+                    <span class="value">null</span>
+                </div>
+                break;
+        }
+    </div>
+    
+    <!-- Connection points -->
+    @foreach (var connectionPoint in Piece.ConnectionPoints)
+    {
+        <div class="connection-point @connectionPoint.Type" 
+             style="left: @(connectionPoint.RelativePosition.X)px; top: @(connectionPoint.RelativePosition.Y)px"
+             data-connection-id="@connectionPoint.Id">
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public PuzzlePiece Piece { get; set; } = new();
+    [Parameter] public EventCallback OnSelected { get; set; }
+    [Parameter] public EventCallback<(string pieceId, Position position)> OnPositionChanged { get; set; }
+
+    private ElementReference pieceElement;
+    private bool isDragging = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initializePuzzlePiece", pieceElement, DotNetObjectReference.Create(this));
+        }
+    }
+
+    private async Task OnClick()
+    {
+        await OnSelected.InvokeAsync();
+    }
+
+    private void OnMouseDown()
+    {
+        isDragging = true;
+        Piece.IsDragging = true;
+    }
+
+    [JSInvokable]
+    public async Task UpdatePosition(double x, double y)
+    {
+        Piece.Position.X = x;
+        Piece.Position.Y = y;
+        await OnPositionChanged.InvokeAsync((Piece.Id, Piece.Position));
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void StopDragging()
+    {
+        isDragging = false;
+        Piece.IsDragging = false;
+        StateHasChanged();
+    }
+
+    private string GetPieceTypeClass()
+    {
+        return Piece.Type.ToString().ToLower() + "-piece";
+    }
+}
+
+<style>
+.puzzle-piece {
+    position: absolute;
+    min-width: 120px;
+    min-height: 50px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: move;
+    user-select: none;
+    z-index: 10;
+    transition: transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 2px solid transparent;
+}
+
+.puzzle-piece:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.puzzle-piece.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+}
+
+.object-piece {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border: 2px solid #1976d2;
+    color: #1976d2;
+}
+
+.array-piece {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+    border: 2px solid #7b1fa2;
+    color: #7b1fa2;
+}
+
+.string-piece {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+    border: 2px solid #388e3c;
+    color: #2e7d32;
+}
+
+.number-piece {
+    background: linear-gradient(135deg, #fff3e0, #ffcc02);
+    border: 2px solid #f57c00;
+    color: #ef6c00;
+}
+
+.boolean-piece {
+    background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+    border: 2px solid #c2185b;
+    color: #ad1457;
+}
+
+.null-piece {
+    background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+    border: 2px solid #757575;
+    color: #616161;
+}
+
+.piece-content {
+    display: flex;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.symbol {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.key {
+    margin: 0 4px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.value {
+    margin-left: 4px;
+}
+
+.connection-point {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #007bff;
+    background-color: white;
+    cursor: pointer;
+    z-index: 15;
+}
+
+.connection-point.input {
+    transform: translateX(-50%);
+}
+
+.connection-point.output {
+    transform: translateX(-50%);
+    background-color: #007bff;
+}
+
+.connection-point:hover {
+    transform: translateX(-50%) scale(1.2);
+}
+</style>

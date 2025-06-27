@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using BlazorAppLee.Data;
+using BlazorAppLee.Services.JsonPuzzle;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore; // Required for ApplicationDbContext placeholder
 
@@ -18,6 +19,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<IJsonPuzzleService, JsonPuzzleService>();
 builder.Services.AddAntiforgery(); // Add Antiforgery services
 
 var app = builder.Build();

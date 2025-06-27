@@ -1,0 +1,254 @@
+@using BlazorAppLee.Models.JsonPuzzle
+
+<div class="property-panel">
+    <div class="property-header">
+        <h5>Properties</h5>
+    </div>
+    
+    <div class="property-content">
+        @if (SelectedPiece == null)
+        {
+            <p class="no-selection">No piece selected</p>
+        }
+        else
+        {
+            <div class="property-group">
+                <label class="property-label">Type</label>
+                <div class="property-value">
+                    <span class="badge @GetTypeBadgeClass()">@SelectedPiece.Type</span>
+                </div>
+            </div>
+            
+            <div class="property-group">
+                <label class="property-label">ID</label>
+                <div class="property-value">
+                    <small class="text-muted">@SelectedPiece.Id</small>
+                </div>
+            </div>
+            
+            @if (SelectedPiece.Type != PuzzleType.Object && SelectedPiece.Type != PuzzleType.Array)
+            {
+                <div class="property-group">
+                    <label class="property-label">Key</label>
+                    <input type="text" 
+                           class="form-control form-control-sm" 
+                           @bind="SelectedPiece.Key" 
+                           @bind:event="oninput"
+                           @onblur="@(async () => await OnPropertyChanged.InvokeAsync(SelectedPiece))"
+                           placeholder="Property key" />
+                </div>
+            }
+            
+            @switch (SelectedPiece.Type)
+            {
+                case PuzzleType.String:
+                    <div class="property-group">
+                        <label class="property-label">Value</label>
+                        <input type="text" 
+                               class="form-control form-control-sm" 
+                               @bind="stringValue" 
+                               @bind:event="oninput"
+                               @onblur="OnStringValueChanged"
+                               placeholder="Enter text" />
+                    </div>
+                    break;
+                    
+                case PuzzleType.Number:
+                    <div class="property-group">
+                        <label class="property-label">Value</label>
+                        <input type="number" 
+                               step="0.01"
+                               class="form-control form-control-sm" 
+                               @bind="numberValue" 
+                               @bind:event="oninput"
+                               @onblur="OnNumberValueChanged" />
+                    </div>
+                    break;
+                    
+                case PuzzleType.Boolean:
+                    <div class="property-group">
+                        <label class="property-label">Value</label>
+                        <select class="form-select form-select-sm" 
+                                @bind="booleanValue">
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                        </select>
+                    </div>
+                    break;
+                    
+                case PuzzleType.Object:
+                    <div class="property-group">
+                        <label class="property-label">Key (if nested)</label>
+                        <input type="text" 
+                               class="form-control form-control-sm" 
+                               @bind="SelectedPiece.Key" 
+                               @bind:event="oninput"
+                               @onblur="@(async () => await OnPropertyChanged.InvokeAsync(SelectedPiece))"
+                               placeholder="Object key" />
+                    </div>
+                    break;
+                    
+                case PuzzleType.Array:
+                    <div class="property-group">
+                        <label class="property-label">Key (if nested)</label>
+                        <input type="text" 
+                               class="form-control form-control-sm" 
+                               @bind="SelectedPiece.Key" 
+                               @bind:event="oninput"
+                               @onblur="@(async () => await OnPropertyChanged.InvokeAsync(SelectedPiece))"
+                               placeholder="Array key" />
+                    </div>
+                    break;
+            }
+            
+            <div class="property-group">
+                <label class="property-label">Position</label>
+                <div class="position-inputs">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">X</span>
+                        <input type="number" 
+                               class="form-control" 
+                               @bind="positionX" 
+                               @bind:event="oninput"
+                               @onblur="OnPositionChanged" />
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Y</span>
+                        <input type="number" 
+                               class="form-control" 
+                               @bind="positionY" 
+                               @bind:event="oninput"
+                               @onblur="OnPositionChanged" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public PuzzlePiece? SelectedPiece { get; set; }
+    [Parameter] public EventCallback<PuzzlePiece> OnPropertyChanged { get; set; }
+
+    private string stringValue = "";
+    private double numberValue = 0;
+    private string booleanValue = "false";
+    private double positionX = 0;
+    private double positionY = 0;
+
+    protected override void OnParametersSet()
+    {
+        if (SelectedPiece != null)
+        {
+            stringValue = SelectedPiece.Value?.ToString() ?? "";
+            
+            if (double.TryParse(SelectedPiece.Value?.ToString(), out var num))
+                numberValue = num;
+                
+            booleanValue = SelectedPiece.Value?.ToString()?.ToLower() ?? "false";
+            positionX = SelectedPiece.Position.X;
+            positionY = SelectedPiece.Position.Y;
+        }
+    }
+
+    private async Task OnStringValueChanged()
+    {
+        if (SelectedPiece != null)
+        {
+            SelectedPiece.Value = stringValue;
+            await OnPropertyChanged.InvokeAsync(SelectedPiece);
+        }
+    }
+
+    private async Task OnNumberValueChanged()
+    {
+        if (SelectedPiece != null)
+        {
+            SelectedPiece.Value = numberValue;
+            await OnPropertyChanged.InvokeAsync(SelectedPiece);
+        }
+    }
+
+    private async Task OnBooleanValueChanged()
+    {
+        if (SelectedPiece != null)
+        {
+            SelectedPiece.Value = bool.Parse(booleanValue);
+            await OnPropertyChanged.InvokeAsync(SelectedPiece);
+        }
+    }
+
+    private async Task OnPositionChanged()
+    {
+        if (SelectedPiece != null)
+        {
+            SelectedPiece.Position.X = positionX;
+            SelectedPiece.Position.Y = positionY;
+            await OnPropertyChanged.InvokeAsync(SelectedPiece);
+        }
+    }
+
+    private string GetTypeBadgeClass()
+    {
+        return SelectedPiece?.Type switch
+        {
+            PuzzleType.Object => "bg-primary",
+            PuzzleType.Array => "bg-secondary",
+            PuzzleType.String => "bg-success",
+            PuzzleType.Number => "bg-warning",
+            PuzzleType.Boolean => "bg-info",
+            PuzzleType.Null => "bg-dark",
+            _ => "bg-light text-dark"
+        };
+    }
+}
+
+<style>
+.property-panel {
+    padding: 15px;
+    height: 100%;
+}
+
+.property-header h5 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.no-selection {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    margin-top: 50px;
+}
+
+.property-group {
+    margin-bottom: 15px;
+}
+
+.property-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.property-value {
+    margin-bottom: 5px;
+}
+
+.position-inputs {
+    display: flex;
+    gap: 8px;
+}
+
+.position-inputs .input-group {
+    flex: 1;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+}
+</style>

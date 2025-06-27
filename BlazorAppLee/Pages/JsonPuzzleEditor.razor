@@ -1,0 +1,207 @@
+@page "/json-puzzle"
+@using BlazorAppLee.Models.JsonPuzzle
+@using BlazorAppLee.Services.JsonPuzzle
+@inject IJsonPuzzleService JsonPuzzleService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>JSON Puzzle Editor</PageTitle>
+
+<div class="json-puzzle-editor">
+    <div class="d-flex h-100">
+        <!-- Toolbox -->
+        <div class="toolbox-panel">
+            <Toolbox OnPieceSelected="OnToolboxPieceSelected" />
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-container flex-grow-1">
+            <Canvas @ref="canvasRef" 
+                   Pieces="@puzzlePieces" 
+                   OnPiecePositionChanged="@((args) => OnPiecePositionChanged(args.Item1, args.Item2))"
+                   OnPieceSelected="@OnPieceSelected"
+                   OnConnectionCreated="@((args) => OnConnectionCreated(args.Item1, args.Item2))" />
+        </div>
+
+        <!-- Side Panels -->
+        <div class="side-panels">
+            <!-- Property Panel -->
+            <div class="property-panel">
+                <PropertyPanel SelectedPiece="@selectedPiece" 
+                              OnPropertyChanged="OnPropertyChanged" />
+            </div>
+
+            <!-- JSON Preview -->
+            <div class="json-preview-panel">
+                <JsonPreview JsonContent="@currentJson" 
+                            OnJsonImport="OnJsonImport" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Canvas? canvasRef;
+    private List<PuzzlePiece> puzzlePieces = new();
+    private PuzzlePiece? selectedPiece;
+    private string currentJson = "{}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateJson();
+    }
+
+    private async Task OnToolboxPieceSelected(PuzzleType pieceType)
+    {
+        var newPiece = JsonPuzzleService.CreatePuzzlePiece(pieceType);
+        
+        // Position new piece in a free area
+        newPiece.Position = FindFreePosition();
+        
+        puzzlePieces.Add(newPiece);
+        
+        await UpdateJson();
+        StateHasChanged();
+    }
+
+    private Position FindFreePosition()
+    {
+        var baseX = 100.0;
+        var baseY = 100.0;
+        var spacing = 150.0;
+        
+        for (int i = 0; i < 20; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                var testPos = new Position(baseX + i * spacing, baseY + j * spacing);
+                
+                if (!puzzlePieces.Any(p => 
+                    Math.Abs(p.Position.X - testPos.X) < 100 && 
+                    Math.Abs(p.Position.Y - testPos.Y) < 80))
+                {
+                    return testPos;
+                }
+            }
+        }
+        
+        return new Position(baseX, baseY);
+    }
+
+    private async Task OnPiecePositionChanged(string pieceId, Position newPosition)
+    {
+        var piece = puzzlePieces.FirstOrDefault(p => p.Id == pieceId);
+        if (piece != null)
+        {
+            piece.Position = newPosition;
+            StateHasChanged();
+        }
+    }
+
+    private void OnPieceSelected(PuzzlePiece piece)
+    {
+        // Deselect all pieces
+        foreach (var p in puzzlePieces)
+        {
+            p.IsSelected = false;
+        }
+        
+        // Select the clicked piece
+        piece.IsSelected = true;
+        selectedPiece = piece;
+        
+        StateHasChanged();
+    }
+
+    private async Task OnConnectionCreated(string sourceId, string targetId)
+    {
+        var source = puzzlePieces.FirstOrDefault(p => p.Id == sourceId);
+        var target = puzzlePieces.FirstOrDefault(p => p.Id == targetId);
+        
+        if (source != null && target != null && JsonPuzzleService.ValidateConnection(source, target))
+        {
+            target.ParentId = source.Id;
+            source.Children.Add(target);
+            
+            await UpdateJson();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnPropertyChanged(PuzzlePiece piece)
+    {
+        await UpdateJson();
+        StateHasChanged();
+    }
+
+    private async Task OnJsonImport(string json)
+    {
+        try
+        {
+            var importedPieces = JsonPuzzleService.ConvertFromJson(json);
+            
+            // Position imported pieces
+            for (int i = 0; i < importedPieces.Count; i++)
+            {
+                importedPieces[i].Position = new Position(50 + i * 150, 50 + (i % 3) * 100);
+            }
+            
+            puzzlePieces = importedPieces;
+            selectedPiece = null;
+            
+            await UpdateJson();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Failed to import JSON: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateJson()
+    {
+        currentJson = JsonPuzzleService.ConvertToJson(puzzlePieces);
+        await Task.CompletedTask;
+    }
+}
+
+<style>
+.json-puzzle-editor {
+    height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.toolbox-panel {
+    width: 250px;
+    background-color: white;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.canvas-container {
+    position: relative;
+    background-color: #ffffff;
+    background-image: radial-gradient(circle, #e9ecef 1px, transparent 1px);
+    background-size: 20px 20px;
+    overflow: hidden;
+}
+
+.side-panels {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #dee2e6;
+}
+
+.property-panel {
+    flex: 0 0 300px;
+    background-color: white;
+    border-bottom: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.json-preview-panel {
+    flex: 1;
+    background-color: white;
+    overflow-y: auto;
+}
+</style>

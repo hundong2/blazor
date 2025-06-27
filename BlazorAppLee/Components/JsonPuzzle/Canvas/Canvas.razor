@@ -1,0 +1,70 @@
+@using BlazorAppLee.Models.JsonPuzzle
+@inject IJSRuntime JSRuntime
+
+<div class="canvas" @ref="canvasElement" id="puzzle-canvas">
+    @foreach (var piece in Pieces)
+    {
+        <PuzzlePieceComponent @key="piece.Id" 
+                    Piece="piece" 
+                    OnSelected="() => OnPieceSelected.InvokeAsync(piece)"
+                    OnPositionChanged="@((args) => HandlePiecePositionChanged(args.Item1, args.Item2))" />
+    }
+    
+    <!-- Connection lines will be drawn here -->
+    <svg class="connection-lines" width="100%" height="100%">
+        @foreach (var piece in Pieces.Where(p => !string.IsNullOrEmpty(p.ParentId)))
+        {
+            var parent = Pieces.FirstOrDefault(p => p.Id == piece.ParentId);
+            if (parent != null)
+            {
+                <line x1="@(parent.Position.X + 100)" 
+                      y1="@(parent.Position.Y + 25)" 
+                      x2="@piece.Position.X" 
+                      y2="@(piece.Position.Y + 25)" 
+                      stroke="#007bff" 
+                      stroke-width="2" 
+                      stroke-dasharray="5,5" />
+            }
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter] public List<PuzzlePiece> Pieces { get; set; } = new();
+    [Parameter] public EventCallback<(string pieceId, Position position)> OnPiecePositionChanged { get; set; }
+    [Parameter] public EventCallback<PuzzlePiece> OnPieceSelected { get; set; }
+    [Parameter] public EventCallback<(string sourceId, string targetId)> OnConnectionCreated { get; set; }
+
+    private ElementReference canvasElement;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initializeCanvas", canvasElement);
+        }
+    }
+
+    private async Task HandlePiecePositionChanged(string pieceId, Position newPosition)
+    {
+        await OnPiecePositionChanged.InvokeAsync((pieceId, newPosition));
+    }
+}
+
+<style>
+.canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    min-height: 600px;
+}
+
+.connection-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+</style>
