@@ -1,0 +1,17 @@
+@using MudBlazor
+
+<MudNavMenu Rounded="true" Margin="Margins.Normal.Default" Color="Color.Primary" Dense="false">
+    <MudText Typo="Typo.h6" Class="px-4 py-2">Navigation</MudText>
+    <MudDivider Class="my-2" />
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Main Inspector</MudNavLink>
+    <MudNavLink Href="/settings" Icon="@Icons.Material.Filled.Settings" Disabled="true">Settings (Future)</MudNavLink>
+
+    <MudNavGroup Title="Links" Icon="@Icons.Material.Filled.Link" Expanded="false">
+        <MudNavLink Href="https://mudblazor.com/" Target="_blank" Icon="@Icons.Material.Filled.Launch">MudBlazor</MudNavLink>
+        <MudNavLink Href="https://dotnet.microsoft.com/apps/maui" Target="_blank" Icon="@Icons.Material.Filled.Launch">.NET MAUI</MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>
+
+@code {
+    // Add any specific logic for the NavMenu if needed
+}

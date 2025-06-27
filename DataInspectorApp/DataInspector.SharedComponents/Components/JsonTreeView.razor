@@ -1,0 +1,81 @@
+@using DataInspector.SharedComponents.Models
+@using System.Text.Json
+
+<MudPaper Class="pa-3 mud-elevation-0 json-tree-view" Style="max-height: 70vh; overflow-y: auto; border: 1px solid var(--mud-palette-lines-default);">
+    @if (RootNode != null)
+    {
+        <JsonTreeViewNode Node="RootNode" Depth="0" />
+    }
+    else if (!string.IsNullOrWhiteSpace(ErrorMessageInternal))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true">@ErrorMessageInternal</MudAlert>
+    }
+    else
+    {
+        <MudText Typo="Typo.caption" Align="Align.Center" Class="pa-4">No JSON data to display or JSON is empty/invalid.</MudText>
+    }
+</MudPaper>
+
+@code {
+    private JsonDisplayNode? _rootNode;
+    private string? _errorMessageInternal; // Renamed to avoid conflict if ErrorMessage is a parameter
+
+    [Parameter]
+    public string? JsonString { get; set; }
+
+    // Optional: Allow passing a pre-parsed root node
+    [Parameter]
+    public JsonDisplayNode? RootNodeInput { get; set; }
+
+    // Optional: For external error messages
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (RootNodeInput != null)
+        {
+            _rootNode = RootNodeInput;
+            _errorMessageInternal = null;
+        }
+        else if (!string.IsNullOrWhiteSpace(ErrorMessage)) // Prioritize external error message
+        {
+            _errorMessageInternal = ErrorMessage;
+            _rootNode = null;
+        }
+        else
+        {
+            ParseJsonString();
+        }
+    }
+
+    private void ParseJsonString()
+    {
+        _errorMessageInternal = null; // Clear previous error
+        if (string.IsNullOrWhiteSpace(JsonString))
+        {
+            _rootNode = null;
+            return;
+        }
+
+        try
+        {
+            _rootNode = JsonDisplayNode.Parse(JsonString); // Use the static method in the model
+
+            // Check if the Parse method itself returned an error node
+            if (_rootNode != null && _rootNode.Key == "Error" && _rootNode.NodeType == JsonDisplayNodeType.String)
+            {
+                _errorMessageInternal = _rootNode.Value?.ToString() ?? "Failed to parse JSON.";
+                _rootNode = null; // Clear the root node as it's an error representation
+            }
+        }
+        catch (Exception ex) // Catch any other unexpected errors from parsing (should be rare if Parse handles it)
+        {
+            _errorMessageInternal = $"Failed to display JSON: {ex.Message}";
+            _rootNode = null;
+            Console.WriteLine($"JsonTreeView: Unexpected error during parse: {ex}");
+        }
+    }
+}

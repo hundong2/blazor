@@ -1,0 +1,70 @@
+/* Styles for JsonTreeView */
+.json-tree-view {
+    font-family: var(--mud-typography-font-family-body);
+    font-size: var(--mud-typography-body2-size);
+    line-height: var(--mud-typography-body2-lineheight);
+}
+
+.json-tree-view .json-tree-node .node-line {
+    min-height: 32px;
+    transition: background-color 0.1s ease-in-out;
+    border-radius: var(--mud-default-borderradius);
+    display: flex; /* Ensure MudPaper content aligns correctly if used as node-line */
+    align-items: center; /* Vertically align items in the node line */
+    padding: 2px 4px; /* Reduced padding for density */
+}
+
+.json-tree-view .json-tree-node .node-line:hover {
+    background-color: var(--mud-palette-action-hover);
+}
+
+.json-tree-view .json-tree-node .node-key {
+    font-weight: 500;
+    color: var(--mud-palette-primary); /* Use theme primary for keys */
+}
+.theme-dark .json-tree-view .json-tree-node .node-key {
+     color: var(--mud-palette-primary-lighten); /* Lighter primary for dark theme */
+}
+
+
+.json-tree-view .json-tree-node .node-marker {
+    color: var(--mud-palette-secondary-text); /* Or lines-inputs, or a specific grey */
+}
+.theme-dark .json-tree-view .json-tree-node .node-marker {
+    color: var(--mud-palette-secondary-text);
+}
+
+
+.json-tree-view .json-tree-node .node-children {
+    border-left: 1px solid var(--mud-palette-lines-default);
+    margin-left: 16px; /* Adjusted margin for visual hierarchy */
+    padding-left: 8px; /* Padding inside the bordered area */
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+/* Value specific colors - can be overridden by MudText Color prop if needed */
+.json-tree-view .node-value-string { color: var(--mud-palette-success); }
+.json-tree-view .node-value-number { color: var(--mud-palette-warning); }
+.json-tree-view .node-value-boolean { color: var(--mud-palette-error); }
+.json-tree-view .node-value-null { color: var(--mud-palette-info); }
+
+.theme-dark .json-tree-view .node-value-string { color: var(--mud-palette-success-lighten); }
+.theme-dark .json-tree-view .node-value-number { color: var(--mud-palette-warning-lighten); }
+.theme-dark .json-tree-view .node-value-boolean { color: var(--mud-palette-error-lighten); }
+.theme-dark .json-tree-view .node-value-null { color: var(--mud-palette-info-lighten); }
+
+/* Ensure toggle icon has enough space and is clickable */
+.json-tree-view .toggle-icon {
+    margin-right: 4px; /* Space between icon and key/value */
+}
+
+/* Child count styling */
+.json-tree-view .node-child-count {
+    color: var(--mud-palette-text-disabled);
+    font-size: var(--mud-typography-caption-size);
+    margin-left: 4px;
+}
+.theme-dark .json-tree-view .node-child-count {
+    color: var(--mud-palette-text-disabled);
+}

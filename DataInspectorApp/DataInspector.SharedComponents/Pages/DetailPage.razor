@@ -1,0 +1,118 @@
+@page "/detail/{ItemId}"
+@using DataInspector.SharedComponents.Models
+@using DataInspector.SharedComponents.Components
+@using System.Linq
+@inject NavigationManager NavigationManager
+
+<PageTitle>Detail - @(SelectedItem?.Name ?? ItemId)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
+    <MudToolBar Dense="true" Class="mb-4 px-0" Gutters="false">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" Title="Back to Main Page" Edge="Edge.Start" />
+        <MudText Typo="Typo.h6" Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            Details for: <strong>@(SelectedItem?.Name ?? "Item")</strong> (ID: @(ItemId ?? "N/A"))
+        </MudText>
+    </MudToolBar>
+
+    @if (SelectedItem != null)
+    {
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="1" Class="pa-4" Style="height:100%;">
+                    <MudText Typo="Typo.h6" GutterBottom="true">Item Overview</MudText>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.body1" Class="mt-2"><strong>ID:</strong> @SelectedItem.Id</MudText>
+                    <MudText Typo="Typo.body1" Class="mt-2"><strong>Name:</strong> @SelectedItem.Name</MudText>
+                    <MudText Typo="Typo.body1" Class="mt-2 d-flex align-center">
+                        <strong class="mr-1">Status:</strong>
+                        <MudChip Size="Size.Small" Color="@GetStatusColor(SelectedItem.Status)" Variant="Variant.Text">@SelectedItem.Status.ToString()</MudChip>
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="mt-2"><strong>Value Representation:</strong></MudText>
+                    <MudText Typo="Typo.caption" Style="word-break:break-all; max-height: 150px; overflow-y:auto; display:block; white-space: pre-wrap; border: 1px solid var(--mud-palette-lines-inputs); padding: 4px; border-radius: var(--mud-default-borderradius);">
+                        @SelectedItem.ValueRepresentation
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudPaper Elevation="1" Class="pa-4" Style="height:100%;">
+                    <MudText Typo="Typo.h6" GutterBottom="true">Detailed JSON Result</MudText>
+                    <MudDivider Class="my-2" />
+                    <JsonTreeView JsonString="@SelectedItem.DetailJsonString" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" Class="my-3">@ErrorMessage</MudAlert>
+        @* Back button is now in the toolbar, so not repeated here unless specific error context needs it. *@
+    }
+    else
+    {
+        <div class="d-flex justify-center align-center" style="min-height: 200px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudText Typo="Typo.h6" Class="ml-3">Loading item details...</MudText>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string? ItemId { get; set; }
+
+    private DataItem? SelectedItem { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    // This is a placeholder for a proper data service.
+    // In a real application, inject a service to fetch data.
+    private static List<DataItem> MockDataSource { get; set; } = new List<DataItem>
+    {
+        new DataItem("001", "Alpha Record", "{\"type\":\"A\", \"value\":100, \"active\":true}", ItemStatus.Pass, "{\"id\":\"001\", \"name\":\"Alpha Record\", \"timestamp\":\"2023-01-15T10:30:00Z\", \"source\":\"SystemA\", \"payload\":{\"type\":\"A\", \"value\":100, \"active\":true, \"tags\":[\"critical\", \"processed\", \"Urgent\"]}}"),
+        new DataItem("002", "Bravo Item", "Simple string value with bug", ItemStatus.Fail, "{\"id\":\"002\", \"name\":\"Bravo Item\", \"error\":\"Processing failed due to timeout\", \"details\":{\"code\":504, \"retry_attempt\":3}, \"tags\":[\"failed\", \"Urgent\", \"Bug\"]}"),
+        new DataItem("003", "Charlie Data", "[10, 20, 30]", ItemStatus.None, "{\"id\":\"003\", \"name\":\"Charlie Data\", \"values\":[10,20,30], \"metadata\":{\"source\":\"SystemB\", \"verified\":false}, \"tags\":[\"pending\", \"Data Issue\"]}"),
+        new DataItem("004", "Delta Element", "{\"type\":\"B\", \"value\":250}", ItemStatus.Pass, "{\"id\":\"004\", \"name\":\"Delta Element\", \"payload\":{\"type\":\"B\", \"value\":250, \"children\":[{\"id\":\"child1\", \"status\":\"ok\"}]}, \"tags\":[\"processed\", \"Feature\"]}"),
+        new DataItem("005", "Echo Resource", "Another string with 'UI/UX' keyword", ItemStatus.Fail, "{\"id\":\"005\", \"name\":\"Echo Resource\", \"status_code\":500, \"error_message\":\"Internal Server Error\", \"tags\":[\"Bug\", \"critical\", \"UI/UX\"]}"),
+        new DataItem("006", "Foxtrot Package", "Value contains 'feature'", ItemStatus.Pass, "{\"id\":\"006\", \"name\":\"Foxtrot Package\", \"description\":\"New feature package for upcoming release.\", \"version\":\"v2.1.0\", \"tags\":[\"Feature\", \"release\", \"Documentation\"]}"),
+        new DataItem("007", "Golf Item", "{\"status\":\"pending\"}", ItemStatus.None, "{\"id\":\"007\", \"name\":\"Golf Item\", \"data\": {\"status\":\"pending\", \"priority\": \"low\"}, \"tags\":[\"Backend\"] }"),
+        new DataItem("008", "Hotel Record", "Urgent: Needs review", ItemStatus.Fail, "{\"id\":\"008\", \"name\":\"Hotel Record\", \"notes\":\"Requires immediate attention due to data inconsistency.\", \"tags\":[\"Urgent\", \"Data Issue\"] }")
+    };
+
+
+    protected override async Task OnParametersSetAsync() // Use async version for potential async data fetching
+    {
+        await base.OnParametersSetAsync();
+        LoadItemDetails();
+    }
+
+    private void LoadItemDetails()
+    {
+        ErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(ItemId))
+        {
+            ErrorMessage = "Item ID is missing.";
+            SelectedItem = null;
+            return;
+        }
+
+        SelectedItem = MockDataSource.FirstOrDefault(item => item.Id == ItemId);
+
+        if (SelectedItem == null)
+        {
+            ErrorMessage = $"Item with ID '{ItemId}' not found.";
+        }
+    }
+
+    private Color GetStatusColor(ItemStatus status) => status switch
+    {
+        ItemStatus.Pass => Color.Success,
+        ItemStatus.Fail => Color.Error,
+        ItemStatus.None => Color.Default,
+        _ => Color.Dark
+    };
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
