@@ -1,6 +1,8 @@
+using static System.Net.Mime.MediaTypeNames;
+
 namespace DataInspector.MAUI
 {
-    public partial class App : Application
+    public partial class App : Microsoft.Maui.Controls.Application // Corrected base class
     {
         public App()
         {
