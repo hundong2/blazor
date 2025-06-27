@@ -91,7 +91,6 @@
     [Parameter] public EventCallback<(string pieceId, Position position)> OnPositionChanged { get; set; }
 
     private ElementReference pieceElement;
-    private bool isDragging = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -108,7 +107,6 @@
 
     private void OnMouseDown()
     {
-        isDragging = true;
         Piece.IsDragging = true;
     }
 
@@ -124,7 +122,6 @@
     [JSInvokable]
     public void StopDragging()
     {
-        isDragging = false;
         Piece.IsDragging = false;
         StateHasChanged();
     }

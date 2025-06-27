@@ -87,7 +87,7 @@
         return new Position(baseX, baseY);
     }
 
-    private async Task OnPiecePositionChanged(string pieceId, Position newPosition)
+    private void OnPiecePositionChanged(string pieceId, Position newPosition)
     {
         var piece = puzzlePieces.FirstOrDefault(p => p.Id == pieceId);
         if (piece != null)
