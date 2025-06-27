@@ -1,0 +1,151 @@
+@using JsonPuzzleEditor.SharedComponents.Models
+@inject JsonPuzzleEditor.SharedComponents.Services.JsonSerializerService JsonSerializer
+@inject IJSRuntime JSRuntime
+
+<div class="json-editor-canvas @ThemeClass">
+    <button @onclick="ToggleTheme">Toggle Theme</button>
+    <NodeDisplay Node="RootNode" Depth="0" OnChanged="HandleNodeChanged" OnDeleteRequested="HandleDeleteNode" />
+
+    <hr style="margin: 20px 0;" />
+    <div class="json-input-section">
+        <h3>Load JSON</h3>
+        <textarea rows="10" style="width: 100%; font-family: monospace; margin-bottom:10px; padding: 5px; border: 1px solid var(--node-border-light);"
+                  class="theme-aware-textarea"
+                  placeholder="Paste JSON here to load..."
+                  @bind="JsonStringToLoad" @bind:event="oninput"></textarea>
+        <button @onclick="LoadJsonFromString" disabled="@string.IsNullOrWhiteSpace(JsonStringToLoad)" class="action-button">Load JSON from Text</button>
+        @if (!string.IsNullOrEmpty(UserFeedbackLoad)) { <span class="user-feedback">@UserFeedbackLoad</span> }
+    </div>
+
+    <hr style="margin: 20px 0;" />
+    <div class="json-output-section">
+        <h3>Generated JSON</h3>
+        <div class="json-output-controls">
+            <button @onclick="ShowJson" class="action-button">View/Refresh JSON</button>
+            <button @onclick="CopyJsonToClipboard" disabled="@string.IsNullOrEmpty(GeneratedJsonString)" class="action-button">Copy JSON</button>
+        </div>
+        <textarea readonly rows="15" style="width: 100%; font-family: monospace; margin-top: 10px; padding: 5px; border: 1px solid var(--node-border-light);"
+                  class="theme-aware-textarea"
+                  @bind="GeneratedJsonString"></textarea>
+        @if (!string.IsNullOrEmpty(UserFeedbackJsonActions)) { <span class="user-feedback">@UserFeedbackJsonActions</span> }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public JsonNodeData RootNode { get; set; } = new JsonNodeData { NodeType = JsonNodeType.Object };
+
+    private string ThemeClass = "theme-light";
+    private string GeneratedJsonString { get; set; } = string.Empty;
+    private string UserFeedbackJsonActions { get; set; } = string.Empty; // Feedback for JSON view/copy
+    private string UserFeedbackLoad { get; set; } = string.Empty;      // Feedback for JSON load
+    private string JsonStringToLoad { get; set; } = string.Empty;
+
+
+    private void ToggleTheme()
+    {
+        ThemeClass = ThemeClass == "theme-light" ? "theme-dark" : "theme-light";
+    }
+
+    private void HandleNodeChanged()
+    {
+        StateHasChanged();
+        Console.WriteLine("JSON structure updated by user.");
+        // To make JSON preview truly live, uncomment next line
+        // ShowJson(false); // Pass false to avoid user feedback spam
+    }
+
+    private void HandleDeleteNode(JsonNodeData nodeToDelete)
+    {
+        if (RemoveNode(RootNode, nodeToDelete))
+        {
+            Console.WriteLine($"Node '{nodeToDelete.Key ?? "array_item"}' deleted.");
+            HandleNodeChanged();
+        }
+    }
+
+    private bool RemoveNode(JsonNodeData currentNode, JsonNodeData nodeToDelete)
+    {
+        if (currentNode.Children.Contains(nodeToDelete))
+        {
+            currentNode.Children.Remove(nodeToDelete);
+            return true;
+        }
+        foreach (var child in currentNode.Children.ToList())
+        {
+            if (child.NodeType == JsonNodeType.Object || child.NodeType == JsonNodeType.Array)
+            {
+                if (RemoveNode(child, nodeToDelete))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void ShowJson(bool showFeedback = true)
+    {
+        GeneratedJsonString = JsonSerializer.Serialize(RootNode);
+        if (showFeedback)
+        {
+            UserFeedbackJsonActions = "JSON preview updated.";
+            ClearFeedbackAfterDelay(ref UserFeedbackJsonActions);
+        }
+        // StateHasChanged(); // Usually not needed if @bind is working correctly
+    }
+
+    private async Task CopyJsonToClipboard()
+    {
+        if (!string.IsNullOrEmpty(GeneratedJsonString))
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", GeneratedJsonString);
+                UserFeedbackJsonActions = "JSON copied to clipboard!";
+            }
+            catch (Exception ex)
+            {
+                UserFeedbackJsonActions = $"Error copying: {ex.Message}";
+                Console.WriteLine($"Error copying to clipboard: {ex.Message}");
+            }
+            ClearFeedbackAfterDelay(ref UserFeedbackJsonActions);
+        }
+    }
+
+    private void LoadJsonFromString()
+    {
+        if (string.IsNullOrWhiteSpace(JsonStringToLoad))
+        {
+            UserFeedbackLoad = "JSON string to load is empty.";
+            ClearFeedbackAfterDelay(ref UserFeedbackLoad);
+            return;
+        }
+
+        var newNodeData = JsonSerializer.Deserialize(JsonStringToLoad);
+        if (newNodeData != null && newNodeData.Key != "Error") // Check if deserialization returned an error node
+        {
+            RootNode = newNodeData;
+            GeneratedJsonString = string.Empty; // Clear old generated JSON preview
+            JsonStringToLoad = string.Empty; // Clear input textarea
+            UserFeedbackLoad = "JSON loaded successfully!";
+            StateHasChanged();
+        }
+        else if (newNodeData != null && newNodeData.Key == "Error")
+        {
+             UserFeedbackLoad = newNodeData.Children.FirstOrDefault(c => c.Key == "Message")?.StringValue ?? "Failed to parse JSON.";
+        }
+        else
+        {
+            UserFeedbackLoad = "Failed to parse and load JSON. Unknown error.";
+        }
+        ClearFeedbackAfterDelay(ref UserFeedbackLoad);
+    }
+
+    private async void ClearFeedbackAfterDelay(ref string feedbackVariable, int milliseconds = 3000)
+    {
+        await Task.Delay(milliseconds);
+        feedbackVariable = string.Empty;
+        StateHasChanged();
+    }
+}
