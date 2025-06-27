@@ -1,0 +1,114 @@
+@using DataInspector.SharedComponents.Models
+@inject NavigationManager NavigationManager
+@using System.Linq // For .Any()
+
+<MudPaper Class="pa-1" Elevation="0">
+    @if (Items == null)
+    {
+        <div class="d-flex justify-center align-center" style="height:200px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (!Items.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="my-4" Dense="true">No items to display based on current filters.</MudAlert>
+    }
+    else
+    {
+        <MudDataGrid T="DataItem"
+                     Items="@Items"
+                     Hover="true"
+                     Dense="true"
+                     Striped="true"
+                     Bordered="false"
+                     Filterable="false"
+                     Sortable="true"
+                     MultiSelection="false"
+                     ReadOnly="true"
+                     Class="mud-table-responsive"
+                     Style="max-height: 600px; overflow-y: auto;"
+                     Dense="@IsDense"
+                     HeaderStyle="@($"background-color:{CurrentTheme?.Palette.Surface}; color:{CurrentTheme?.Palette.AppbarText}; border-bottom: 1px solid {CurrentTheme?.Palette.LinesDefault};")">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="Number" Sortable="true" Resizable="true" InitialDirection="SortDirection.Ascending">
+                    <CellTemplate>
+                        <MudHighlighter Text="@context.Item.Id" HighlightedText="@SearchText" />
+                    </CellTemplate>
+                </PropertyColumn>
+
+                <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Resizable="true">
+                    <CellTemplate>
+                        <MudHighlighter Text="@context.Item.Name" HighlightedText="@SearchText" />
+                    </CellTemplate>
+                </PropertyColumn>
+
+                <PropertyColumn Property="x => x.ValueRepresentation" Title="Value" Sortable="false" Resizable="true">
+                    <CellTemplate>
+                        <MudText Typo="Typo.caption" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 350px;" Title="@context.Item.ValueRepresentation">
+                           <MudHighlighter Text="@context.Item.ValueRepresentation" HighlightedText="@SearchText" />
+                        </MudText>
+                    </CellTemplate>
+                </PropertyColumn>
+
+                <TemplateColumn Title="Status" SortBy="@(new Func<DataItem, object>(x => x.Status))" Resizable="false" HeaderClass="text-center" CellClass="text-center">
+                    <CellTemplate>
+                        <MudTooltip Text="@($"View details for {context.Item.Name}")" Duration="500">
+                            <MudChip Size="Size.Small"
+                                     Color="@GetStatusColor(context.Item.Status)"
+                                     OnClick="@(() => NavigateToDetail(context.Item))"
+                                     Style="cursor:pointer; min-width:60px;"> <!-- Ensure chip has some min width -->
+                                <strong>@context.Item.Status.ToString()</strong>
+                            </MudChip>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="DataItem" PageSizeOptions="@(new int[] {10, 20, 50, 100})" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudPaper>
+
+@code {
+    [Parameter]
+    public IEnumerable<DataItem>? Items { get; set; }
+
+    // Optional: For highlighting search text in grid cells
+    [Parameter]
+    public string? SearchText { get; set; }
+
+    [Parameter]
+    public bool IsDense { get; set; } = true; // Default to dense layout
+
+    [CascadingParameter]
+    private MudTheme? CurrentTheme { get; set; } // Injected current theme
+
+    private Color GetStatusColor(ItemStatus status)
+    {
+        return status switch
+        {
+            ItemStatus.Pass => Color.Primary,
+            ItemStatus.Fail => Color.Error,
+            ItemStatus.None => Color.Default,
+            _ => Color.Dark
+        };
+    }
+
+    private void NavigateToDetail(DataItem item)
+    {
+        // Pass the item's ID to the detail page.
+        // The detail page will be responsible for fetching or resolving the DetailJsonString.
+        NavigationManager.NavigateTo($"/detail/{item.Id}");
+    }
+
+    // The MudHighlighter component can use the SearchText parameter if you want to implement text highlighting.
+    // If SearchText is provided, MudHighlighter will highlight occurrences of SearchText in the cell content.
+    // Example for PropertyColumn:
+    // <PropertyColumn Property="x => x.Name" Title="Name">
+    //     <CellTemplate>
+    //         <MudHighlighter Text="@context.Item.Name" HighlightedText="@SearchText" />
+    //     </CellTemplate>
+    // </PropertyColumn>
+    // This requires passing the SearchText from the parent page that uses FieldPanel and ItemsGridView.
+}

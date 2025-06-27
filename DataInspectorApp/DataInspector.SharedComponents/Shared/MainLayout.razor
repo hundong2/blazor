@@ -1,0 +1,127 @@
+@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6" Class="ml-3">Data Inspector</MudText>
+        <MudSpacer />
+        <MudTooltip Text="@(_isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.WbSunny : Icons.Material.Filled.Brightness3)" Color="Color.Inherit" OnClick="@ToggleDarkMode" />
+        </MudTooltip>
+        @* <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" /> *@
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Variant="@DrawerVariant.Responsive">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent Class="mud-main-content-custom">
+        <MudContainer MaxWidth="MaxWidth.False" Class="mt-4"> <!-- MaxWidth.False to use full width -->
+             @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudTheme _theme = new MudTheme()
+    {
+        Palette = new PaletteLight()
+        {
+            Primary = Colors.Blue.Default,
+            Secondary = Colors.Green.Accent4,
+            Background = Colors.Grey.Ligthen5,
+            AppbarBackground = Colors.Blue.Default,
+            AppbarText = Colors.Shades.White,
+            DrawerBackground = Colors.Grey.Ligthen4,
+            Surface = Colors.Shades.White,
+            LinesDefault = Colors.Grey.Lighten2,
+            TextPrimary = Colors.Grey.Darken3, // 기본 텍스트 색상
+            TextSecondary = Colors.Grey.Darken1,
+            ActionDefault = Colors.Grey.Darken2, // 아이콘 등 기본 액션 색상
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1,
+            Secondary = Colors.Green.Accent2,
+            Background = Colors.Grey.Darken4,
+            AppbarBackground = Colors.Grey.Darken3,
+            AppbarText = Colors.Shades.White,
+            DrawerBackground = Colors.Grey.Darken4,
+            Surface = Colors.Grey.Darken3,
+            LinesDefault = Colors.Grey.Darken1,
+            TextPrimary = Colors.Grey.Lighten5,
+            TextSecondary = Colors.Grey.Lighten3,
+            ActionDefault = Colors.Grey.Lighten2,
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "6px",
+            DrawerWidthLeft = "250px"
+        },
+        Typography = new Typography()
+        {
+            Default = new Default()
+            {
+                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
+                FontSize = ".875rem", // 14px
+                FontWeight = 400,
+                LineHeight = 1.43,
+                LetterSpacing = ".01071em"
+            },
+            H6 = new H6() // AppBar Title 등에 사용될 수 있음
+            {
+                FontSize = "1.15rem", // 조금 더 작게 조정
+                FontWeight = 500,
+            },
+            Button = new Button()
+            {
+                FontWeight = 500,
+                TextTransform = "none" // 버튼 텍스트 대문자 변환 없음
+            }
+        }
+    };
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    void ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    // For responsive drawer behavior (optional, MudDrawer handles some of this)
+    // [Inject] public IJSRuntime? JSRuntime { get; set; }
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender && JSRuntime != null)
+    //     {
+    //         // var width = await JSRuntime.InvokeAsync<int>("getInnerWidth");
+    //         // if (width < 960) // Example breakpoint for MudBlazor's 'md'
+    //         // {
+    //         //     _drawerOpen = false;
+    //         //     StateHasChanged();
+    //         // }
+    //     }
+    // }
+
+    // Simple JS function to get window width (place in _Host.cshtml or index.html for MAUI/Wasm)
+    // function getInnerWidth() { return window.innerWidth; }
+    // For MAUI, JS interop needs to be set up carefully if accessing window properties.
+    // Or use Blazor MediaQuery utilities if available/preferred.
+    // For simplicity, manual toggle is primary, responsive part is more advanced.
+}
+
+<style>
+    .mud-main-content-custom {
+        /* Ensures content area has some padding if MudContainer doesn't provide enough */
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+</style>

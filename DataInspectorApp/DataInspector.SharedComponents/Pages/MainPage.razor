@@ -1,0 +1,106 @@
+@page "/"
+@using DataInspector.SharedComponents.Models
+@using DataInspector.SharedComponents.Components
+@using System.Linq
+@using System.Text.Json
+
+<PageTitle>Data Inspector - Main</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
+    <MudText Typo="Typo.h5" GutterBottom="true" Class="mb-4">Data Items Dashboard</MudText>
+
+    <FieldPanel OnFilterChanged="HandleFilterChanged" />
+
+    <ItemsGridView Items="@FilteredItems" SearchText="@CurrentFilters?.SearchTerm" />
+</MudContainer>
+
+@code {
+    private List<DataItem> AllItems { get; set; } = new List<DataItem>();
+    private IEnumerable<DataItem> FilteredItems { get; set; } = new List<DataItem>();
+    private FilterCriteria CurrentFilters { get; set; } = new FilterCriteria();
+
+    protected override void OnInitialized()
+    {
+        LoadMockData();
+        ApplyFilters();
+    }
+
+    private void LoadMockData()
+    {
+        AllItems = new List<DataItem>
+        {
+            new DataItem("001", "Alpha Record", "{\"type\":\"A\", \"value\":100, \"active\":true}", ItemStatus.Pass, "{\"id\":\"001\", \"name\":\"Alpha Record\", \"timestamp\":\"2023-01-15T10:30:00Z\", \"source\":\"SystemA\", \"payload\":{\"type\":\"A\", \"value\":100, \"active\":true, \"tags\":[\"critical\", \"processed\", \"Urgent\"]}}"),
+            new DataItem("002", "Bravo Item", "Simple string value with bug", ItemStatus.Fail, "{\"id\":\"002\", \"name\":\"Bravo Item\", \"error\":\"Processing failed due to timeout\", \"details\":{\"code\":504, \"retry_attempt\":3}, \"tags\":[\"failed\", \"Urgent\", \"Bug\"]}"),
+            new DataItem("003", "Charlie Data", "[10, 20, 30]", ItemStatus.None, "{\"id\":\"003\", \"name\":\"Charlie Data\", \"values\":[10,20,30], \"metadata\":{\"source\":\"SystemB\", \"verified\":false}, \"tags\":[\"pending\", \"Data Issue\"]}"),
+            new DataItem("004", "Delta Element", "{\"type\":\"B\", \"value\":250}", ItemStatus.Pass, "{\"id\":\"004\", \"name\":\"Delta Element\", \"payload\":{\"type\":\"B\", \"value\":250, \"children\":[{\"id\":\"child1\", \"status\":\"ok\"}]}, \"tags\":[\"processed\", \"Feature\"]}"),
+            new DataItem("005", "Echo Resource", "Another string with 'UI/UX' keyword", ItemStatus.Fail, "{\"id\":\"005\", \"name\":\"Echo Resource\", \"status_code\":500, \"error_message\":\"Internal Server Error\", \"tags\":[\"Bug\", \"critical\", \"UI/UX\"]}"),
+            new DataItem("006", "Foxtrot Package", "Value contains 'feature'", ItemStatus.Pass, "{\"id\":\"006\", \"name\":\"Foxtrot Package\", \"description\":\"New feature package for upcoming release.\", \"version\":\"v2.1.0\", \"tags\":[\"Feature\", \"release\", \"Documentation\"]}"),
+            new DataItem("007", "Golf Item", "{\"status\":\"pending\"}", ItemStatus.None, "{\"id\":\"007\", \"name\":\"Golf Item\", \"data\": {\"status\":\"pending\", \"priority\": \"low\"}, \"tags\":[\"Backend\"] }"),
+            new DataItem("008", "Hotel Record", "Urgent: Needs review", ItemStatus.Fail, "{\"id\":\"008\", \"name\":\"Hotel Record\", \"notes\":\"Requires immediate attention due to data inconsistency.\", \"tags\":[\"Urgent\", \"Data Issue\"] }")
+        };
+    }
+
+    private void HandleFilterChanged(FilterCriteria newFilters)
+    {
+        CurrentFilters = newFilters;
+        ApplyFilters();
+        // StateHasChanged(); // MudDataGrid should react to Items collection changes. If not, uncomment.
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<DataItem> items = AllItems;
+
+        if (!string.IsNullOrWhiteSpace(CurrentFilters.SearchTerm))
+        {
+            string lowerSearchTerm = CurrentFilters.SearchTerm.ToLowerInvariant();
+            items = items.Where(item =>
+                (item.Name?.ToLowerInvariant().Contains(lowerSearchTerm) ?? false) ||
+                (item.ValueRepresentation?.ToLowerInvariant().Contains(lowerSearchTerm) ?? false) ||
+                (item.Id?.ToLowerInvariant().Contains(lowerSearchTerm) ?? false)
+            );
+        }
+
+        if (CurrentFilters.StatusFilter.HasValue)
+        {
+            items = items.Where(item => item.Status == CurrentFilters.StatusFilter.Value);
+        }
+
+        if (CurrentFilters.SelectedTags != null && CurrentFilters.SelectedTags.Any())
+        {
+            items = items.Where(item => {
+                bool tagMatch = false;
+                try
+                {
+                    using var doc = JsonDocument.Parse(item.DetailJsonString);
+                    if (doc.RootElement.TryGetProperty("tags", out var tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach(var tagInJson in tagsElement.EnumerateArray())
+                        {
+                            if (tagInJson.ValueKind == JsonValueKind.String &&
+                                CurrentFilters.SelectedTags.Contains(tagInJson.GetString() ?? "", StringComparer.OrdinalIgnoreCase))
+                            {
+                                tagMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch(JsonException) { /* Malformed JSON or no 'tags' property, ignore for this filter part */ }
+
+                // Fallback: also check Name and ValueRepresentation for tags if no JSON tags match
+                // This makes the mock AvailableTags in FieldPanel more useful without strict JSON tag structure
+                if (!tagMatch)
+                {
+                     tagMatch = CurrentFilters.SelectedTags.Any(st =>
+                        (item.Name?.IndexOf(st, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                        (item.ValueRepresentation?.IndexOf(st, StringComparison.OrdinalIgnoreCase) >= 0)
+                    );
+                }
+                return tagMatch;
+            });
+        }
+
+        FilteredItems = items.ToList();
+    }
+}

@@ -1,0 +1,117 @@
+@using DataInspector.SharedComponents.Models
+@using System.Linq
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid Spacing="3" Justify="Justify.FlexStart">
+        <MudItem xs="12" sm="6" md="4">
+            <MudSelect T="string"
+                       Label="Tags"
+                       MultiSelection="true"
+                       @bind-SelectedValues="SelectedTags"
+                       Placeholder="Select tags..."
+                       Variant="Variant.Outlined"
+                       AdornmentIcon="@Icons.Material.Filled.LocalOffer"
+                       AdornmentColor="Color.Primary"
+                       Clearable="true">
+                @foreach (var tag in AvailableTags)
+                {
+                    <MudSelectItem T="string" Value="@tag">@tag</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudSelect T="ItemStatus?"
+                       Label="Status"
+                       @bind-Value="SelectedStatusFilter"
+                       Placeholder="Filter by status..."
+                       Variant="Variant.Outlined"
+                       AdornmentIcon="@Icons.Material.Filled.FilterList"
+                       AdornmentColor="Color.Primary"
+                       Clearable="true">
+                <MudSelectItem T="ItemStatus?" Value="@(null as ItemStatus?)">Any Status</MudSelectItem>
+                <MudSelectItem T="ItemStatus?" Value="ItemStatus.Pass">Pass</MudSelectItem>
+                <MudSelectItem T="ItemStatus?" Value="ItemStatus.Fail">Fail</MudSelectItem>
+                <MudSelectItem T="ItemStatus?" Value="ItemStatus.None">None</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" sm="12" md="5">
+            <MudTextField T="string"
+                          Label="Search"
+                          @bind-Value="SearchTerm"
+                          Placeholder="Search by name or value..."
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          Clearable="true"
+                          DebounceInterval="300" />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+    // Available options for multi-select and combo box (can be parameters or fetched from a service)
+    private IEnumerable<string> AvailableTags { get; set; } = new List<string> { "Urgent", "Bug", "Feature", "Data Issue", "UI/UX", "Backend" };
+
+    private IEnumerable<string> _selectedTags = new List<string>();
+    public IEnumerable<string> SelectedTags
+    {
+        get => _selectedTags;
+        set
+        {
+            if (_selectedTags.SequenceEqual(value)) return; // Check for actual change
+            _selectedTags = value;
+            NotifyFilterChanged();
+        }
+    }
+
+    private ItemStatus? _selectedStatusFilter;
+    public ItemStatus? SelectedStatusFilter
+    {
+        get => _selectedStatusFilter;
+        set
+        {
+            if (_selectedStatusFilter == value) return;
+            _selectedStatusFilter = value;
+            NotifyFilterChanged();
+        }
+    }
+
+    private string _searchTerm = string.Empty;
+    public string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            if (_searchTerm == value) return;
+            _searchTerm = value;
+            NotifyFilterChanged(); // DebounceInterval on MudTextField handles the delay
+        }
+    }
+
+    [Parameter]
+    public EventCallback<FilterCriteria> OnFilterChanged { get; set; }
+
+    private FilterCriteria GetCurrentFilters()
+    {
+        return new FilterCriteria
+        {
+            SelectedTags = this.SelectedTags ?? Enumerable.Empty<string>(), // Ensure not null
+            StatusFilter = this.SelectedStatusFilter,
+            SearchTerm = this.SearchTerm
+        };
+    }
+
+    private async Task NotifyFilterChanged()
+    {
+        await OnFilterChanged.InvokeAsync(GetCurrentFilters());
+    }
+
+    // Optional: If you want to trigger an initial filter notification when the component loads
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     await NotifyFilterChanged();
+    // }
+}

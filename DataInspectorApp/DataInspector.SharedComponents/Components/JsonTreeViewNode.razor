@@ -1,0 +1,92 @@
+@using DataInspector.SharedComponents.Models
+
+<div class="json-tree-node" style="@($"padding-left: {Depth * 1}px;")"> <!-- Reduced padding for a denser tree -->
+    <MudPaper Elevation="0" Class="d-flex align-center pa-1 node-line" Style="width: 100%;">
+        <MudIconButton Icon="@GetIconForNode()"
+                       Size="Size.Small"
+                       OnClick="ToggleExpand"
+                       Disabled="!Node.Children.Any()"
+                       Style="@(Node.Children.Any() ? "cursor:pointer;" : "visibility:hidden;")"
+                       Class="mr-1 toggle-icon" />
+
+        @if (!string.IsNullOrEmpty(Node.Key))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Primary" Class="mr-1 node-key">@($"\"{Node.Key}\":")</MudText>
+        }
+
+        @switch (Node.NodeType)
+        {
+            case JsonDisplayNodeType.Object:
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="node-marker">@(Node.IsExpanded ? "{" : "{ ... }")</MudText>
+                @if (!Node.IsExpanded && Node.Children.Any()) { <MudText Typo="Typo.caption" Color="Color.Inherit" Class="ml-1 node-child-count">(@Node.Children.Count items)</MudText> }
+                break;
+            case JsonDisplayNodeType.Array:
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="node-marker">@(Node.IsExpanded ? "[" : "[ ... ]")</MudText>
+                @if (!Node.IsExpanded && Node.Children.Any()) { <MudText Typo="Typo.caption" Color="Color.Inherit" Class="ml-1 node-child-count">(@Node.Children.Count items)</MudText> }
+                break;
+            default:
+                <MudText Typo="Typo.body2" Color="@GetValueColor()" Class="node-value">@Node.FormattedValue</MudText>
+                break;
+        }
+    </MudPaper>
+
+    @if (Node.IsExpanded && Node.Children.Any())
+    {
+        <div class="node-children pl-4"> <!-- Indent children further -->
+            @foreach (var child in Node.Children)
+            {
+                <JsonTreeViewNode Node="child" Depth="Depth + 1" />
+            }
+            @if (Node.NodeType == JsonDisplayNodeType.Object)
+            {
+                <div class="node-line" style="@($"padding-left: {Depth * 1}px;")"><MudText Typo="Typo.body2" Color="Color.Secondary" Class="node-marker">}</MudText></div>
+            }
+            else if (Node.NodeType == JsonDisplayNodeType.Array)
+            {
+                <div class="node-line" style="@($"padding-left: {Depth * 1}px;")"><MudText Typo="Typo.body2" Color="Color.Secondary" Class="node-marker">]</MudText></div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public JsonDisplayNode Node { get; set; } = null!;
+
+    [Parameter]
+    public int Depth { get; set; }
+
+    private void ToggleExpand()
+    {
+        if (Node.Children.Any())
+        {
+            Node.IsExpanded = !Node.IsExpanded;
+        }
+    }
+
+    private string GetIconForNode()
+    {
+        if (!Node.Children.Any()) return ""; // No icon if no children or not an expandable type
+        return Node.IsExpanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight;
+    }
+
+    // private Color GetValueColor() => Node.NodeType switch // Replaced by CSS classes
+    // {
+    //     JsonDisplayNodeType.String => Color.Success,
+    //     JsonDisplayNodeType.Number => Color.Warning,
+    //     JsonDisplayNodeType.Boolean => Color.Error,
+    //     JsonDisplayNodeType.Null => Color.Info,
+    //     _ => Color.Default
+    // };
+
+    private string GetValueCssClass() => Node.NodeType switch
+    {
+        JsonDisplayNodeType.String => "node-value-string",
+        JsonDisplayNodeType.Number => "node-value-number",
+        JsonDisplayNodeType.Boolean => "node-value-boolean",
+        JsonDisplayNodeType.Null => "node-value-null",
+        _ => "" // No specific class for object/array text like '{' or '['
+    };
+}
+
+<!-- Internal <style> block removed, styles moved to custom-styles.css -->
