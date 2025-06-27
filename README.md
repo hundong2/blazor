@@ -1,6 +1,8 @@
 # blazor
 Blazor web application
 
+![Alt](https://repobeats.axiom.co/api/embed/3fb2a30ba5d2cf6e59b80eb973864b50f2c35ada.svg "Repobeats analytics image")
+
 ## Getting start 
 
 - make project 
