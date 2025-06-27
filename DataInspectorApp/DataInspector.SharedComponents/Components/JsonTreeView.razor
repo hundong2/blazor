@@ -2,13 +2,13 @@
 @using System.Text.Json
 
 <MudPaper Class="pa-3 mud-elevation-0 json-tree-view" Style="max-height: 70vh; overflow-y: auto; border: 1px solid var(--mud-palette-lines-default);">
-    @if (RootNode != null)
+    @if (_rootNode != null)
     {
-        <JsonTreeViewNode Node="RootNode" Depth="0" />
+        <JsonTreeViewNode Node="_rootNode" Depth="0" />
     }
-    else if (!string.IsNullOrWhiteSpace(ErrorMessageInternal))
+    else if (!string.IsNullOrWhiteSpace(_errorMessageInternal))
     {
-        <MudAlert Severity="Severity.Error" Dense="true">@ErrorMessageInternal</MudAlert>
+        <MudAlert Severity="Severity.Error" Dense="true">@_errorMessageInternal</MudAlert>
     }
     else
     {
