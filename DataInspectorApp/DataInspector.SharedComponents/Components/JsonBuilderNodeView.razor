@@ -1,0 +1,135 @@
+@using DataInspector.SharedComponents.Models.JsonBuilder
+@using System.Text.Json
+
+<MudPaper Outlined="true" Class="pa-2 ma-1">
+    @switch (Node.Type)
+    {
+        case JsonNodeType.Object:
+            RenderObject((JsonObjectNode)Node);
+            break;
+        case JsonNodeType.Array:
+            RenderArray((JsonArrayNode)Node);
+            break;
+        case JsonNodeType.Value:
+            RenderValue((JsonValueNode)Node);
+            break;
+    }
+</MudPaper>
+
+@code {
+    [Parameter]
+    public JsonNode Node { get; set; } = new JsonObjectNode();
+
+    [Parameter]
+    public EventCallback<JsonNode> OnNodeChanged { get; set; }
+
+    private string newKey = "";
+
+    private RenderFragment RenderObject(JsonObjectNode objNode) => __builder =>
+    {
+        <div class="json-object">
+            <MudText Typo="Typo.subtitle1" GutterBottom="true">{</MudText>
+            <div class="pl-4">
+                @foreach (var prop in objNode.Properties)
+                {
+                    <div class="d-flex align-center">
+                        <MudTextField @bind-Value="prop.Key" Label="Key" Variant="Variant.Text" Margin="Margin.Dense" Class="mr-2" />
+                        <MudText>:</MudText>
+                        <JsonBuilderNodeView Node="prop.Value" OnNodeChanged="OnNodeChanged" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveProperty(objNode, prop)" />
+                    </div>
+                }
+                <div class="d-flex align-center mt-2">
+                    <MudTextField @bind-Value="newKey" Label="New Key" Variant="Variant.Text" Margin="Margin.Dense" Class="mr-2" />
+                    <MudButton OnClick="() => AddProperty(objNode)" Variant="Variant.Text" Size="Size.Small" Disabled="@string.IsNullOrWhiteSpace(newKey)">Add Value</MudButton>
+                    <MudButton OnClick="() => AddObject(objNode)" Variant="Variant.Text" Size="Size.Small" Disabled="@string.IsNullOrWhiteSpace(newKey)">Add Object</MudButton>
+                    <MudButton OnClick="() => AddArray(objNode)" Variant="Variant.Text" Size="Size.Small" Disabled="@string.IsNullOrWhiteSpace(newKey)">Add Array</MudButton>
+                </div>
+            </div>
+            <MudText Typo="Typo.subtitle1">}</MudText>
+        </div>
+    };
+
+    private RenderFragment RenderArray(JsonArrayNode arrayNode) => __builder =>
+    {
+        <div class="json-array">
+            <MudText Typo="Typo.subtitle1">[</MudText>
+            <div class="pl-4">
+                @foreach (var item in arrayNode.Items)
+                {
+                    <div class="d-flex align-center">
+                        <JsonBuilderNodeView Node="item" OnNodeChanged="OnNodeChanged" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveItem(arrayNode, item)" />
+                    </div>
+                }
+                <div class="mt-2">
+                    <MudButton OnClick="() => AddItem(arrayNode, JsonValueKind.String)" Variant="Variant.Text" Size="Size.Small">Add Value</MudButton>
+                    <MudButton OnClick="() => AddItem(arrayNode, JsonValueKind.Object)" Variant="Variant.Text" Size="Size.Small">Add Object</MudButton>
+                    <MudButton OnClick="() => AddItem(arrayNode, JsonValueKind.Array)" Variant="Variant.Text" Size="Size.Small">Add Array</MudButton>
+                </div>
+            </div>
+            <MudText Typo="Typo.subtitle1">]</MudText>
+        </div>
+    };
+
+    private RenderFragment RenderValue(JsonValueNode valueNode) => __builder =>
+    {
+        <div class="json-value">
+            <MudTextField @bind-Value="valueNode.Value" Label="Value" Variant="Variant.Text" Margin="Margin.Dense" />
+        </div>
+    };
+
+    // --- Object Modification Methods ---
+    private void AddProperty(JsonObjectNode node)
+    {
+        if (!string.IsNullOrWhiteSpace(newKey))
+        {
+            node.Properties.Add(new KeyValuePair<string, JsonNode>(newKey, new JsonValueNode { Parent = node, Value = "" }));
+            newKey = "";
+            OnNodeChanged.InvokeAsync(Node);
+        }
+    }
+    private void AddObject(JsonObjectNode node)
+    {
+        if (!string.IsNullOrWhiteSpace(newKey))
+        {
+            node.Properties.Add(new KeyValuePair<string, JsonNode>(newKey, new JsonObjectNode { Parent = node }));
+            newKey = "";
+            OnNodeChanged.InvokeAsync(Node);
+        }
+    }
+    private void AddArray(JsonObjectNode node)
+    {
+        if (!string.IsNullOrWhiteSpace(newKey))
+        {
+            node.Properties.Add(new KeyValuePair<string, JsonNode>(newKey, new JsonArrayNode { Parent = node }));
+            newKey = "";
+            OnNodeChanged.InvokeAsync(Node);
+        }
+    }
+    private void RemoveProperty(JsonObjectNode node, KeyValuePair<string, JsonNode> property)
+    {
+        node.Properties.Remove(property);
+        OnNodeChanged.InvokeAsync(Node);
+    }
+
+
+    // --- Array Modification Methods ---
+    private void AddItem(JsonArrayNode node, JsonValueKind type)
+    {
+        JsonNode newNode = type switch
+        {
+            JsonValueKind.Object => new JsonObjectNode { Parent = node },
+            JsonValueKind.Array => new JsonArrayNode { Parent = node },
+            _ => new JsonValueNode { Parent = node, Value = "" }
+        };
+        node.Items.Add(newNode);
+        OnNodeChanged.InvokeAsync(Node);
+    }
+
+    private void RemoveItem(JsonArrayNode node, JsonNode item)
+    {
+        node.Items.Remove(item);
+        OnNodeChanged.InvokeAsync(Node);
+    }
+}

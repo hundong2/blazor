@@ -1,0 +1,67 @@
+@page "/block-builder"
+@using MudBlazor
+@using DataInspector.SharedComponents.Models.JsonBuilder
+@using DataInspector.SharedComponents.Components
+@using System.Text.Json
+
+<PageTitle>Block-based JSON Builder</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Block-based JSON Builder</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">Visually construct a JSON object using the blocks below. The generated JSON will appear on the right.</MudText>
+
+<MudToolBar Dense="true" Class="mb-2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ResetBuilder" StartIcon="@Icons.Material.Filled.Refresh">Reset to Empty Object</MudButton>
+</MudToolBar>
+
+<MudGrid Spacing="4">
+    <MudItem xs="12" md="6">
+        <JsonBuilderNodeView Node="@RootNode" OnNodeChanged="HandleNodeChange" />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudTextField @bind-Value="_jsonOutput"
+                      T="string"
+                      Label="Generated JSON"
+                      Variant="Variant.Outlined"
+                      Lines="30"
+                      FullWidth="true"
+                      ReadOnly="true"
+                      Style="font-family: monospace; white-space: pre; word-wrap: normal; overflow-x: auto;" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    private JsonNode RootNode { get; set; } = new JsonObjectNode();
+    private string _jsonOutput = "{}";
+
+    protected override void OnInitialized()
+    {
+        UpdateJsonOutput();
+    }
+
+    private void HandleNodeChange(JsonNode changedNode)
+    {
+        // This callback ensures the parent page re-renders and updates the JSON output.
+        // The changedNode parameter could be used for more complex logic if needed.
+        UpdateJsonOutput();
+        StateHasChanged();
+    }
+
+    private void UpdateJsonOutput()
+    {
+        try
+        {
+            var jsonNode = RootNode.ToJsonNode();
+            _jsonOutput = jsonNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception ex)
+        {
+            _jsonOutput = $"Error generating JSON: {ex.Message}";
+        }
+    }
+
+    private void ResetBuilder()
+    {
+        RootNode = new JsonObjectNode();
+        UpdateJsonOutput();
+    }
+}

@@ -1,0 +1,50 @@
+@page "/login"
+@layout LoginLayout
+@using DataInspector.SharedComponents.Models
+@using DataInspector.SharedComponents.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+
+<MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100vh;">
+    <MudItem xs="10" sm="6" md="4">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Login</MudText>
+            @if (!string.IsNullOrWhiteSpace(_errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-3">@_errorMessage</MudAlert>
+            }
+            <MudForm @ref="_form" @bind-IsValid="@_isFormValid" OnValidSubmit="HandleLogin">
+                <MudTextField T="string" @bind-Value="_userAccount.UserName" Label="Username" Required="true" RequiredError="Username is required." />
+                <MudTextField T="string" @bind-Value="_userAccount.Password" Label="Password" InputType="InputType.Password" Required="true" RequiredError="Password is required." />
+                <MudTextField T="string" @bind-Value="_userAccount.Otp" Label="OTP" Required="true" RequiredError="OTP is required." />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_isFormValid)" FullWidth="true" Class="mt-4">
+                    Log In
+                </MudButton>
+            </MudForm>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private UserAccount _userAccount = new UserAccount();
+    private string? _errorMessage;
+    private MudForm? _form;
+    private bool _isFormValid;
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = null;
+        var customAuthProvider = (CustomAuthenticationStateProvider)AuthStateProvider;
+        var success = await customAuthProvider.LoginAsync(_userAccount);
+
+        if (success)
+        {
+            NavManager.NavigateTo("/inspector");
+        }
+        else
+        {
+            _errorMessage = "Invalid username, password, or OTP.";
+        }
+    }
+}

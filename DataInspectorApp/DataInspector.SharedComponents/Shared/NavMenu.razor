@@ -1,17 +1,14 @@
 @using MudBlazor
 
 <MudNavMenu Rounded="true" Margin="Margin.Normal" Color="Color.Primary" Dense="false">
-    <MudText Typo="Typo.h6" Class="px-4 py-2">Navigation</MudText>
+    <MudText Typo="Typo.h6" Class="px-4 py-2">Navigator of Page</MudText>
     <MudDivider Class="my-2" />
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Main Inspector</MudNavLink>
-    <MudNavLink Href="/settings" Icon="@Icons.Material.Filled.Settings" Disabled="true">Settings (Future)</MudNavLink>
+    <MudNavLink Href="/inspector" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DataObject">Data Inspector</MudNavLink>
+    <MudNavLink Href="/json-editor" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Code">JSON Editor</MudNavLink>
+    <MudNavLink Href="/block-builder" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ViewQuilt">Block-based Builder</MudNavLink>
 
     <MudNavGroup Title="Links" Icon="@Icons.Material.Filled.Link" Expanded="false">
         <MudNavLink Href="https://mudblazor.com/" Target="_blank" Icon="@Icons.Material.Filled.Launch">MudBlazor</MudNavLink>
         <MudNavLink Href="https://dotnet.microsoft.com/apps/maui" Target="_blank" Icon="@Icons.Material.Filled.Launch">.NET MAUI</MudNavLink>
     </MudNavGroup>
 </MudNavMenu>
-
-@code {
-    // Add any specific logic for the NavMenu if needed
-}

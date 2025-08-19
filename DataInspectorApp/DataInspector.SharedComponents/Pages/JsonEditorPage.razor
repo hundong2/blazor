@@ -1,0 +1,56 @@
+@page "/json-editor"
+@using MudBlazor
+@using System.Text.Json
+
+<PageTitle>JSON Editor</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">JSON Editor</MudText>
+
+<MudToolBar Dense="true" Class="mb-2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FormatJson" StartIcon="@Icons.Material.Filled.FormatAlignLeft" Disabled="@string.IsNullOrWhiteSpace(_jsonText)">Format</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ClearText" StartIcon="@Icons.Material.Filled.Clear" Disabled="@string.IsNullOrWhiteSpace(_jsonText)" Class="ml-2">Clear</MudButton>
+</MudToolBar>
+
+@if (!string.IsNullOrWhiteSpace(_formatErrorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-2">@_formatErrorMessage</MudAlert>
+}
+
+<MudTextField @bind-Value="_jsonText"
+              T="string"
+              Label="Enter JSON here"
+              Variant="Variant.Outlined"
+              Lines="25"
+              FullWidth="true"
+              Immediate="true"
+              Style="font-family: monospace; white-space: pre; word-wrap: normal; overflow-x: auto;" />
+
+@code {
+    private string? _jsonText;
+    private string? _formatErrorMessage;
+
+    private void FormatJson()
+    {
+        _formatErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(_jsonText))
+        {
+            return;
+        }
+
+        try
+        {
+            using var jDoc = JsonDocument.Parse(_jsonText, new JsonDocumentOptions { AllowTrailingCommas = true });
+            _jsonText = JsonSerializer.Serialize(jDoc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (JsonException ex)
+        {
+            _formatErrorMessage = $"Invalid JSON: {ex.Message}";
+        }
+    }
+
+    private void ClearText()
+    {
+        _jsonText = string.Empty;
+        _formatErrorMessage = null;
+    }
+}
