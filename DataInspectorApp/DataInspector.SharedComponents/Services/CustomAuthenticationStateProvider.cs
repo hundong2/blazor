@@ -1,9 +1,9 @@
+using System.Security.Claims;
+using System.Threading.Tasks;
 using DataInspector.SharedComponents.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using System.Text.Json;
 
 namespace DataInspector.SharedComponents.Services
@@ -12,6 +12,7 @@ namespace DataInspector.SharedComponents.Services
     {
         private readonly IJSRuntime _jsRuntime;
         private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+        private ClaimsPrincipal _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
 
         public CustomAuthenticationStateProvider(IJSRuntime jsRuntime)
         {
@@ -55,12 +56,14 @@ namespace DataInspector.SharedComponents.Services
                     var userSessionJson = JsonSerializer.Serialize(userSession);
                     await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "userSession", userSessionJson);
 
-                    var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    var identity = new ClaimsIdentity(new[]
                     {
                         new Claim(ClaimTypes.Name, userAccount.UserName)
-                    }, "CustomAuth"));
+                    }, "CustomAuth");
 
-                    NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+                    _currentUser = new ClaimsPrincipal(identity);
+
+                    NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
                     return true;
                 }
             }
@@ -70,6 +73,7 @@ namespace DataInspector.SharedComponents.Services
         public async Task LogoutAsync()
         {
             await _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userSession");
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
         }
 

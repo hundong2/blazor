@@ -1,18 +1,19 @@
 @page "/login"
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Login</PageTitle>
 
-@if (!context.User.Identity?.IsAuthenticated ?? true)
+@if (!(context.Identity?.IsAuthenticated ?? false))
 {
     <h3>로그인이 필요합니다</h3>
     <a class="btn btn-primary" href="/signin-google">Google로 로그인</a>
 }
 else
 {
-    <h3>@context.User.Identity?.Name 님, 환영합니다!</h3>
+    <h3>@context.Identity?.Name 님, 환영합니다!</h3>
     <button class="btn btn-secondary" @onclick="Logout">로그아웃</button>
 }
 
