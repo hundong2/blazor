@@ -1,0 +1,76 @@
+﻿<Window x:Class="wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:vm="clr-namespace:wpf.ViewModels"
+        mc:Ignorable="d"
+        Title="JSON Editor"
+        Height="600" Width="900"
+        WindowStartupLocation="CenterScreen"
+        materialDesign:ColorZoneAssist.Mode="PrimaryDark">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    <DockPanel>
+        <!-- Top AppBar / Menu -->
+        <materialDesign:ColorZone Mode="PrimaryDark" DockPanel.Dock="Top" Padding="8">
+            <DockPanel>
+                <Menu DockPanel.Dock="Left">
+                    <MenuItem Header="_File">
+                        <MenuItem Header="_New" Command="{Binding NewCommand}" />
+                        <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S" />
+                        <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
+                        <Separator />
+                        <MenuItem Header="E_xit" Command="{x:Static ApplicationCommands.Close}" />
+                    </MenuItem>
+                    <MenuItem Header="_Edit">
+                        <MenuItem Header="Format JSON" Command="{Binding FormatJsonCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Settings" />
+                </Menu>
+                <TextBlock DockPanel.Dock="Right"
+                           Foreground="White"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Text="{Binding Title}"/>
+            </DockPanel>
+        </materialDesign:ColorZone>
+
+        <!-- Editor area -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TextBox x:Name="Editor"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto"
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas"
+                             FontSize="14"
+                             Text="{Binding Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             materialDesign:HintAssist.Hint="Edit JSON here"
+                             materialDesign:TextFieldAssist.DecorationVisibility="Hidden"/>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Status / Search highlight -->
+            <DockPanel Grid.Row="1" Margin="8">
+                <TextBlock VerticalAlignment="Center" Text="Highlight (미구현):" Margin="0,0,8,0"/>
+                <TextBox Width="200" x:Name="HighlightBox" />
+                <Button Margin="8,0,0,0" Content="Format" Command="{Binding FormatJsonCommand}" />
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>
