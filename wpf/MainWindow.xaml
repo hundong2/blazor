@@ -7,7 +7,7 @@
         xmlns:vm="clr-namespace:wpf.ViewModels"
         xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="JSON Editor - AvalonEdit (Real-time Highlight)"
+        Title="JSON Editor - AvalonEdit (Real-time Highlight + Regex)"
         Height="600" Width="900"
         WindowStartupLocation="CenterScreen"
         materialDesign:ColorZoneAssist.Mode="PrimaryDark">
@@ -22,6 +22,7 @@
                     <MenuItem Header="_File">
                         <MenuItem Header="_New" Command="{Binding NewCommand}" InputGestureText="Ctrl+N" />
                         <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O" />
+                        <MenuItem Header="Load _Sample Data" Command="{Binding LoadSampleDataCommand}" />
                         <Separator />
                         <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S" />
                         <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" InputGestureText="Ctrl+Shift+S" />
@@ -66,25 +67,46 @@
             <!-- Search/Highlight Controls -->
             <materialDesign:ColorZone Grid.Row="1" Mode="PrimaryMid" Padding="8">
                 <DockPanel>
+                    <!-- Regex Mode Toggle -->
+                    <ToggleButton x:Name="RegexModeToggle"
+                                  Content=".*"
+                                  IsChecked="{Binding IsRegexMode}"
+                                  ToolTip="정규표현식 모드 (Regex Mode) - Ctrl+R"
+                                  Margin="0,0,8,0"
+                                  Width="30"
+                                  Height="30"
+                                  FontWeight="Bold"
+                                  FontSize="14"/>
+                    
                     <TextBlock VerticalAlignment="Center" 
-                               Text="Real-time Highlight:" 
                                Margin="0,0,8,0"
-                               Foreground="White"/>
-                    <TextBox Width="200" 
+                               Foreground="White">
+                        <Run Text="Search"/>
+                        <Run Text="(Regex:" Foreground="LightGray"/>
+                        <Run Text="{Binding IsRegexMode}" Foreground="LightGreen"/>
+                        <Run Text="):" Foreground="LightGray"/>
+                    </TextBlock>
+                    
+                    <TextBox Width="250" 
                              x:Name="HighlightBox"
-                             materialDesign:HintAssist.Hint="Type to highlight instantly"
+                             materialDesign:HintAssist.Hint="Type to highlight (try: \d{2,3}-\d{3,4}-\d{4})"
                              Margin="0,0,8,0"/>
+                    
                     <TextBlock VerticalAlignment="Center" 
-                               Text="{Binding HighlightTerm, StringFormat='Current: &quot;{0}&quot;'}"
+                               Text="{Binding MatchCount, StringFormat='Matches: {0}'}"
                                Margin="0,0,8,0"
-                               Foreground="White"
-                               FontStyle="Italic"/>
-                    <Button Content="Clear Highlights" 
+                               Foreground="Yellow"
+                               FontWeight="SemiBold"/>
+                    
+                    <Button Content="Clear" 
                             x:Name="ClearHighlightButton"
-                            Margin="0,0,8,0"/>
+                            Margin="0,0,8,0"
+                            ToolTip="Clear all highlights"/>
+                    
                     <Button Content="Format JSON" 
                             Command="{Binding FormatJsonCommand}"
-                            materialDesign:ButtonAssist.CornerRadius="3"/>
+                            materialDesign:ButtonAssist.CornerRadius="3"
+                            ToolTip="Format and beautify JSON (Ctrl+Shift+F)"/>
                 </DockPanel>
             </materialDesign:ColorZone>
         </Grid>

@@ -15,6 +15,7 @@ public class TextHighlightService
     private DispatcherTimer? _debounceTimer;
     private string _pendingSearchText = string.Empty;
     private TextDocument? _pendingDocument;
+    private bool _isRegexMode;
 
     public TextHighlightService()
     {
@@ -29,6 +30,11 @@ public class TextHighlightService
     public void SetTextMarkerService(ITextMarkerService textMarkerService)
     {
         _textMarkerService = textMarkerService;
+    }
+
+    public void SetRegexMode(bool isRegexMode)
+    {
+        _isRegexMode = isRegexMode;
     }
 
     public void HighlightText(string searchText, TextDocument document)
@@ -60,7 +66,19 @@ public class TextHighlightService
 
         try
         {
-            var regex = new Regex(Regex.Escape(searchText), RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            Regex regex;
+            
+            if (_isRegexMode)
+            {
+                // Use raw regex pattern
+                regex = new Regex(searchText, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            }
+            else
+            {
+                // Escape special characters for literal string search
+                regex = new Regex(Regex.Escape(searchText), RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            }
+            
             var matches = regex.Matches(document.Text);
 
             foreach (Match match in matches)
@@ -74,6 +92,7 @@ public class TextHighlightService
         catch (Exception)
         {
             // Ignore regex errors for invalid patterns
+            // TODO: Add error callback for invalid regex patterns
         }
     }
 
@@ -82,6 +101,11 @@ public class TextHighlightService
         // For immediate highlighting without debouncing
         _debounceTimer?.Stop();
         PerformHighlight(searchText, document);
+    }
+
+    public int GetMatchCount()
+    {
+        return _markers.Count;
     }
 
     public void ClearHighlights()

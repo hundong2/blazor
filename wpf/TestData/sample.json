@@ -1,0 +1,132 @@
+{
+  "users": [
+    {
+      "id": 1001,
+      "name": "ȫ�浿",
+      "email": "hong@example.com",
+      "phone": "010-1234-5678",
+      "address": "����� ������",
+      "birthDate": "1990-05-15",
+      "isActive": true,
+      "score": 85.5,
+      "tags": [
+        "developer",
+        "javascript",
+        "react"
+      ],
+      "website": "https://hong.dev",
+      "github": "https://github.com/hong123"
+    },
+    {
+      "id": 2002,
+      "name": "�迵��",
+      "email": "kim.younghee@company.co.kr",
+      "phone": "010-9876-5432",
+      "address": "�λ�� �ؿ�뱸",
+      "birthDate": "1985-12-03",
+      "isActive": false,
+      "score": 92.3,
+      "tags": [
+        "designer",
+        "ui/ux",
+        "figma"
+      ],
+      "website": "http://kimdesign.net",
+      "portfolio": "https://behance.net/kimyh"
+    },
+    {
+      "id": 3003,
+      "name": "��ö��",
+      "email": "chulsoo@tech-startup.io",
+      "phone": "02-1234-5678",
+      "address": "�뱸�� �߱�",
+      "birthDate": "1992-08-20",
+      "isActive": true,
+      "score": 78.9,
+      "tags": [
+        "backend",
+        "python",
+        "django",
+        "aws"
+      ],
+      "website": "https://techblog.chulsoo.dev",
+      "linkedin": "https://linkedin.com/in/chulsoo-lee"
+    }
+  ],
+  "products": [
+    {
+      "productId": "PROD-001",
+      "name": "����Ʈ�� ���̽�",
+      "price": 25000,
+      "category": "�\u05FC�����",
+      "sku": "ACC-PHONE-001",
+      "barcode": "8801234567890",
+      "manufacturer": "��ũ���۴�",
+      "releaseDate": "2024-01-15",
+      "tags": [
+        "phone",
+        "case",
+        "protection"
+      ]
+    },
+    {
+      "productId": "PROD-002",
+      "name": "���� �̾���",
+      "price": 150000,
+      "category": "�����",
+      "sku": "AUD-WIRELESS-002",
+      "barcode": "8809876543210",
+      "manufacturer": "������ũ",
+      "releaseDate": "2024-02-28",
+      "tags": [
+        "audio",
+        "wireless",
+        "bluetooth"
+      ]
+    }
+  ],
+  "settings": {
+    "version": "1.2.3",
+    "apiUrl": "https://api.example.com/v1",
+    "timeout": 5000,
+    "retryCount": 3,
+    "features": {
+      "darkMode": true,
+      "notifications": false,
+      "analytics": true
+    },
+    "supportedFormats": [
+      "json",
+      "xml",
+      "csv"
+    ],
+    "endpoints": {
+      "users": "/api/users",
+      "products": "/api/products",
+      "orders": "/api/orders"
+    }
+  },
+  "logs": [
+    {
+      "timestamp": "2024-01-15T09:30:15.123Z",
+      "level": "INFO",
+      "message": "����� �α��� ����",
+      "userId": 1001,
+      "ip": "192.168.1.100"
+    },
+    {
+      "timestamp": "2024-01-15T10:45:22.456Z",
+      "level": "ERROR",
+      "message": "�����ͺ��̽� ���� ����",
+      "error": "Connection timeout after 5000ms",
+      "ip": "10.0.0.50"
+    },
+    {
+      "timestamp": "2024-01-15T11:20:30.789Z",
+      "level": "WARNING",
+      "message": "API ��û Ƚ�� �ʰ�",
+      "userId": 2002,
+      "ip": "203.123.45.67"
+    }
+  ]
+}

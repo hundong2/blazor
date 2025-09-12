@@ -35,6 +35,9 @@ namespace wpf
             // Bind editor content to ViewModel
             if (DataContext is MainViewModel viewModel)
             {
+                // Set initial regex mode
+                _highlightService.SetRegexMode(viewModel.IsRegexMode);
+                
                 // Initial content binding
                 JsonEditor.Text = viewModel.Content;
                 
@@ -47,6 +50,7 @@ namespace wpf
                     if (!string.IsNullOrEmpty(viewModel.HighlightTerm))
                     {
                         _highlightService.HighlightText(viewModel.HighlightTerm, JsonEditor.Document);
+                        UpdateMatchCount();
                     }
                 };
 
@@ -61,6 +65,7 @@ namespace wpf
                         if (!string.IsNullOrEmpty(viewModel.HighlightTerm))
                         {
                             _highlightService.HighlightTextImmediate(viewModel.HighlightTerm, JsonEditor.Document);
+                            UpdateMatchCount();
                         }
                     }
                 };
@@ -110,10 +115,21 @@ namespace wpf
                 }
             }), formatGesture);
 
+            // Ctrl+R: Toggle Regex Mode
+            var regexGesture = new KeyGesture(Key.R, ModifierKeys.Control);
+            var regexBinding = new KeyBinding(new RelayCommand(() =>
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.ToggleRegexModeCommand.Execute(null);
+                }
+            }), regexGesture);
+
             InputBindings.Add(saveBinding);
             InputBindings.Add(openBinding);
             InputBindings.Add(newBinding);
             InputBindings.Add(formatBinding);
+            InputBindings.Add(regexBinding);
         }
 
         private void SetupEventHandlers()
@@ -135,8 +151,14 @@ namespace wpf
                 if (DataContext is MainViewModel vm)
                 {
                     vm.HighlightTerm = string.Empty;
+                    vm.MatchCount = 0;
                 }
+                HighlightBox.Clear();
             };
+
+            // Regex mode toggle
+            RegexModeToggle.Checked += (s, e) => UpdateRegexMode();
+            RegexModeToggle.Unchecked += (s, e) => UpdateRegexMode();
 
             // Handle ViewModel property changes for highlighting
             if (DataContext is MainViewModel viewModel)
@@ -153,7 +175,35 @@ namespace wpf
                 {
                     // Use immediate highlighting for responsive UI
                     _highlightService.HighlightTextImmediate(vm.HighlightTerm, JsonEditor.Document);
+                    UpdateMatchCount();
                 }
+            }
+            else if (e.PropertyName == nameof(MainViewModel.IsRegexMode))
+            {
+                UpdateRegexMode();
+            }
+        }
+
+        private void UpdateRegexMode()
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                _highlightService.SetRegexMode(vm.IsRegexMode);
+                
+                // Re-highlight with new mode if there's a search term
+                if (!string.IsNullOrEmpty(vm.HighlightTerm))
+                {
+                    _highlightService.HighlightTextImmediate(vm.HighlightTerm, JsonEditor.Document);
+                    UpdateMatchCount();
+                }
+            }
+        }
+
+        private void UpdateMatchCount()
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.MatchCount = _highlightService.GetMatchCount();
             }
         }
 
