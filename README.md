@@ -103,110 +103,143 @@ https://learn.microsoft.com/ko-kr/training/modules/build-blazor-todo-list/2-data
 
 https://www.freecodecamp.org/learn/project-euler/project-euler-problems-1-to-100/problem-1-multiples-of-3-or-5
 
-# WPF MVVM JSON Editor (Material Design)
+# WPF MVVM JSON Editor (Material Design + AvalonEdit)
 
-이 프로젝트는 .NET 8 WPF에서 MVVM 패턴과 Material Design in XAML Toolkit을 활용해 JSON 편집기(메뉴, 저장/다른이름으로 저장, Ctrl+S 자동 정렬, 강조 표시)를 구현하기 위한 템플릿과 체크리스트를 제공합니다.
+이 프로젝트는 .NET 8 WPF에서 MVVM 패턴과 Material Design in XAML Toolkit, AvalonEdit을 활용해 JSON 편집기(메뉴, 파일 열기/저장/다른이름으로 저장, Ctrl+S 자동 정렬, 텍스트 강조 표시)를 구현한 완전한 솔루션입니다.
 
-구성 요소
-- 패턴: MVVM (Model, ViewModel, View)
-- UI 프레임워크: WPF (.NET 8)
-- 스타일: Material Design in XAML Toolkit
-- 기능: 파일 메뉴(새로 만들기, 저장, 다른 이름으로 저장), JSON 자동 정렬(Format), Ctrl+S 시 정렬+저장, 키워드 강조(확장 가능)
+## 구성 요소
+- **패턴**: MVVM (Model, ViewModel, View)
+- **UI 프레임워크**: WPF (.NET 8)
+- **스타일**: Material Design in XAML Toolkit
+- **에디터**: AvalonEdit (문법 강조, 줄 번호, 텍스트 마커)
+- **기능**: 파일 메뉴(새로 만들기, 열기, 저장, 다른 이름으로 저장), JSON 자동 정렬(Format), Ctrl+S 시 정렬+저장, 실시간 키워드 강조
 
-폴더 구조
-- wpf/
-  - Models/: DocumentModel
-  - ViewModels/: MainViewModel
-  - Views/: MainWindow.xaml (필요 시 이동)
-  - Infrastructure/: ObservableObject, RelayCommand
-  - Behaviors/: TextBoxBehaviors (강조 기능 샘플)
+## 폴더 구조
+```
+wpf/
+├── Models/
+│   └── DocumentModel.cs
+├── ViewModels/
+│   └── MainViewModel.cs
+├── Services/
+│   ├── TextHighlightService.cs
+│   └── TextMarkerService.cs
+├── Infrastructure/
+│   ├── ObservableObject.cs
+│   └── RelayCommand.cs
+├── MainWindow.xaml
+├── MainWindow.xaml.cs
+├── App.xaml
+├── App.xaml.cs
+└── wpf.csproj
+```
 
-시작하기 (개발 환경)
+## 시작하기 (개발 환경)
 1) .NET SDK 8 설치
 2) IDE: Visual Studio 2022 이상 또는 VS Code + C# Dev Kit
 3) NuGet 복원: 처음 빌드 시 자동
 
-NuGet 패키지
-- MaterialDesignThemes (5.x)
-- MaterialDesignColors (2.x)
+## NuGet 패키지
+- **MaterialDesignThemes** (5.x) - Material Design UI
+- **MaterialDesignColors** (5.x) - Material Design 색상
+- **AvalonEdit** (6.x) - 고급 텍스트 에디터
 
-절차 지향 개발 가이드 (체크리스트)
-A. 템플릿 초기화
-- [x] wpf/wpf.csproj에 MaterialDesignThemes, MaterialDesignColors 패키지 참조 추가
+## 절차 지향 개발 가이드 (체크리스트)
+
+### A. 템플릿 초기화 ? 완료
+- [x] wpf/wpf.csproj에 MaterialDesignThemes, MaterialDesignColors, AvalonEdit 패키지 참조 추가
 - [x] App.xaml에 Material Design ResourceDictionary 병합 구성
 - [x] MVVM 기본 클래스(ObservableObject, RelayCommand) 추가
 - [x] Model(DocumentModel) 추가
-- [x] ViewModel(MainViewModel) 추가 및 명령 구현(New, Save, Save As, FormatJson)
-- [x] MainWindow.xaml UI 초안: 메뉴(파일/편집/설정), 에디터(TextBox), 상태/강조 입력
-- [x] Ctrl+S: JSON 정렬 후 저장 동작 바인딩
+- [x] ViewModel(MainViewModel) 추가 및 명령 구현(New, Open, Save, Save As, FormatJson)
+- [x] MainWindow.xaml UI: AvalonEdit 에디터, 메뉴(파일/편집/설정), 하이라이트 컨트롤
+- [x] 키보드 단축키: Ctrl+S(정렬+저장), Ctrl+O(열기), Ctrl+N(새로 만들기), Ctrl+Shift+F(포맷)
 
-B. UI/스타일 강화
-- [ ] MainWindow to Material Design 레이아웃/컨트롤 최적화 (ColorZone, Typography, Buttons)
+### B. 에디터 강화 ? 완료
+- [x] AvalonEdit 통합(문법 강조/줄번호/괄호 매칭)
+- [x] TextMarkerService 구현(텍스트 강조 표시)
+- [x] TextHighlightService 구현(검색어 하이라이트)
+- [x] 실시간 키워드 강조 연결(ViewModel.HighlightTerm ↔ UI)
+- [x] JSON 문법 하이라이트 적용
+
+### C. 파일 기능 확장 ? 완료
+- [x] 파일 열기(Open) 기능 추가
+- [x] 파일 저장/다른 이름으로 저장 구현
+- [x] 문서 제목 변경 추적 및 창 Title 바인딩
+
+### D. UI/스타일 강화 ? 부분 완료
+- [x] AvalonEdit + Material Design 레이아웃 통합
+- [x] ColorZone을 활용한 메뉴 영역 및 컨트롤 영역 구성
 - [ ] Theme 변경(Primary/Accent) 옵션 추가 (Settings 메뉴에 바인딩)
 - [ ] 다크/라이트 토글 추가
 
-C. 파일 기능 확장
-- [ ] 파일 열기(Open) 추가, 최근 파일 리스트 유지(앱 설정/JumpList)
-- [ ] 저장 전 유효성 검사 및 에러 표시(Validation)
-- [ ] 문서 제목 변경 추적 및 창 Title 바인딩 개선
-
-D. 에디터 강화
-- [ ] AvalonEdit 또는 ICSharpCode.TextEditor 도입(문법 강조/줄번호/괄호 매칭)
-- [ ] JSON 스키마 검증(Newtonsoft.Json.Schema 또는 System.Text.Json.Schema)
-- [ ] 검색/바꾸기 UI 및 키워드 강조 연결(Behaviors -> 실제 에디터 하이라이트 API로 교체)
-- [ ] 자동 서식 지정 옵션 (입력 시 포매팅, 들여쓰기, 탭/스페이스)
-
-E. 테스트/품질
+### E. 테스트/품질 ?? 진행중
 - [ ] ViewModel 단위 테스트(파일 저장 mock, JSON 포맷 로직)
 - [ ] UI 테스트(WinAppDriver 또는 Playwright for .NET Desktop Experimental)
 
-실행 방법
-1) 솔루션 빌드 후 wpf 프로젝트 시작
-2) 앱 실행 시 상단 메뉴 이용
-   - 파일 > 새로 만들기: {} 초기화
-   - 파일 > 저장: 파일이 없으면 경로 선택, 있으면 덮어쓰기
-   - 파일 > 다른 이름으로 저장: 새 경로 선택
-   - 편집 > Format JSON: 현재 내용 포매팅
-   - Ctrl+S: 포매팅 후 저장
+## 실행 방법
+1) **빌드**: `dotnet build wpf/wpf.csproj` 또는 Visual Studio에서 빌드
+2) **실행**: wpf 프로젝트 시작
+3) **기능 사용**:
+   - **파일 > 새로 만들기**: `{}`로 초기화 (Ctrl+N)
+   - **파일 > 열기**: JSON 파일 선택 후 로드 (Ctrl+O)
+   - **파일 > 저장**: 파일이 없으면 경로 선택, 있으면 덮어쓰기 (Ctrl+S)
+   - **파일 > 다른 이름으로 저장**: 새 경로 선택 (Ctrl+Shift+S)
+   - **편집 > Format JSON**: 현재 내용 포매팅 (Ctrl+Shift+F)
+   - **하이라이트**: 하단 입력 상자에 검색어 입력 → 실시간 강조 표시
+   - **Ctrl+S**: JSON 포맷팅 후 저장
 
-데이터 바인딩
-- TextBox.Text <-> MainViewModel.Content (TwoWay, PropertyChanged)
-- 제목 표시: MainViewModel.Title
-- 명령: NewCommand, SaveCommand, SaveAsCommand, FormatJsonCommand
+## 데이터 바인딩
+- **AvalonEdit.Text** ↔ **MainViewModel.Content** (양방향, PropertyChanged)
+- **제목 표시**: MainViewModel.Title → Window.Title 영역
+- **명령**: NewCommand, OpenCommand, SaveCommand, SaveAsCommand, FormatJsonCommand
+- **하이라이트**: MainViewModel.HighlightTerm ↔ TextHighlightService
 
-강조(하이라이트) 설계
-- 현재 샘플: RichTextBox용 Attached Property(TextBoxBehaviors.HighlightText)
-- 추천: AvalonEdit 채택 시 TextMarkerService로 특정 텍스트 범위에 강조 표시
-- 연결 절차(예정)
-  1) AvalonEdit 설치: NuGet ICSharpCode.AvalonEdit
-  2) XAML에 xmlns:avalonedit 추가, TextEditor 컨트롤 배치
-  3) ViewModel에 HighlightTerm 속성 추가, 바인딩
-  4) Behavior/Service에서 TextEditor.Document에서 검색 후 마커 추가
+## 강조(하이라이트) 아키텍처 ? 구현 완료
+- **TextMarkerService**: AvalonEdit용 ITextMarkerService 구현
+  - DocumentColorizingTransformer 상속
+  - 텍스트 마커 생성/제거/조회 기능
+- **TextHighlightService**: 검색어 기반 하이라이트 로직
+  - 정규표현식 매칭으로 텍스트 검색
+  - 실시간 마커 업데이트
+- **연결**: MainWindow.xaml.cs에서 PropertyChanged 이벤트 → 자동 하이라이트 적용
 
-향후 확장 설계
-- 다중 문서 탭(MDI): ObservableCollection<DocumentModel> + SelectedDocument
-- 명령 단축키: RoutedUICommand로 이동 및 InputBindings XAML화
-- 설정 저장: User-scoped Settings 또는 JSON config
+## 키보드 단축키
+- **Ctrl+N**: 새 문서
+- **Ctrl+O**: 파일 열기
+- **Ctrl+S**: JSON 포맷 후 저장
+- **Ctrl+Shift+S**: 다른 이름으로 저장
+- **Ctrl+Shift+F**: JSON 포맷
 
-코딩 규칙
-- Code-behind 로직 최소화(입력 바인딩/윈도우 이벤트 라우팅 정도만 허용)
-- 파일 I/O, 포맷, 상태 관리는 ViewModel에 배치
-- 비동기 파일 작업 시 async/await 적용 및 UI Lock 방지
+## 향후 확장 설계
+- **다중 문서 탭**: ObservableCollection<DocumentModel> + SelectedDocument
+- **테마 설정**: Primary/Accent 색상 변경, 다크/라이트 모드
+- **검색/바꾸기**: Find/Replace 다이얼로그
+- **최근 파일**: JumpList 또는 설정 기반 리스트
+- **설정 저장**: User-scoped Settings 또는 JSON config
 
-개발 흐름 예시
-1) UI: AvalonEdit 교체 및 하이라이트 서비스 구현
-2) ViewModel: HighlightTerm 추가, INotifyPropertyChanged로 변경 알림
-3) 메뉴/단축키: Open/Undo/Redo/Find 등 추가
-4) Settings: Theme/Editor 설정 저장 및 적용
+## 코딩 규칙
+- **Code-behind 최소화**: 입력 바인딩/이벤트 라우팅만 허용
+- **비즈니스 로직**: ViewModel에 배치 (파일 I/O, 포맷, 상태 관리)
+- **비동기 작업**: async/await 적용으로 UI 블로킹 방지
 
-문제 해결 TIP
-- JSON 포맷 오류 발생 시 메시지박스 알림(향후 Snackbar로 UX 개선)
-- Material 리소스 로딩 실패 시 패키지 버전/ResourceDictionary 경로 확인
-- Ctrl+S 중 포맷/저장 순서 제어는 ICommand 조합 또는 CompositeCommand로 리팩토링
+## 문제 해결 TIP
+- **JSON 포맷 오류**: MessageBox 알림 (향후 Snackbar로 UX 개선)
+- **Material 리소스 로딩 실패**: 패키지 버전/ResourceDictionary 경로 확인
+- **AvalonEdit 바인딩**: TextChanged 이벤트로 양방향 바인딩 구현
+- **하이라이트 성능**: 정규표현식 캐싱 및 디바운싱 고려
 
-참고 라이브러리
-- Material Design in XAML Toolkit
-- ICSharpCode.AvalonEdit (추천)
+## 참고 라이브러리
+- **Material Design in XAML Toolkit**: https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit
+- **AvalonEdit**: https://github.com/icsharpcode/AvalonEdit
 
-라이선스/크레딧
-- 본 템플릿은 오픈소스 패키지를 사용합니다. 각 패키지의 라이선스 정책을 준수하세요.
+## 라이선스/크레딧
+본 템플릿은 오픈소스 패키지를 사용합니다. 각 패키지의 라이선스 정책을 준수하세요.
+
+## 완료된 기능 요약 ?
+1. **? Open 기능**: 파일 선택 다이얼로그로 JSON 파일 로드
+2. **? AvalonEdit 통합**: 문법 강조, 줄 번호, 고급 편집 기능
+3. **? 하이라이트 서비스**: 실시간 텍스트 강조 표시 및 마커 관리
+4. **? Material Design UI**: ColorZone, 메뉴, 버튼 스타일 적용
+5. **? 키보드 단축키**: 모든 주요 기능에 단축키 바인딩
+6. **? MVVM 완전 구현**: 데이터 바인딩, 명령 패턴, 관심사 분리

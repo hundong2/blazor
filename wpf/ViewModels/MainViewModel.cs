@@ -14,6 +14,7 @@ namespace wpf.ViewModels;
 public class MainViewModel : ObservableObject
 {
     private DocumentModel _document = new();
+    private string _highlightTerm = string.Empty;
 
     public DocumentModel Document
     {
@@ -36,9 +37,16 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    public string HighlightTerm
+    {
+        get => _highlightTerm;
+        set => SetProperty(ref _highlightTerm, value);
+    }
+
     public string Title => string.IsNullOrEmpty(Document.FilePath) ? "Untitled*" : ($"{Path.GetFileName(Document.FilePath)}" + (Document.IsDirty ? "*" : string.Empty));
 
     public ICommand NewCommand { get; }
+    public ICommand OpenCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand SaveAsCommand { get; }
     public ICommand FormatJsonCommand { get; }
@@ -46,6 +54,7 @@ public class MainViewModel : ObservableObject
     public MainViewModel()
     {
         NewCommand = new RelayCommand(NewFile);
+        OpenCommand = new RelayCommand(OpenFile);
         SaveCommand = new RelayCommand(_ => Save(false));
         SaveAsCommand = new RelayCommand(_ => Save(true));
         FormatJsonCommand = new RelayCommand(_ => FormatJson());
@@ -54,7 +63,35 @@ public class MainViewModel : ObservableObject
     private void NewFile()
     {
         Document = new DocumentModel { Content = "{}", IsDirty = false };
+        OnPropertyChanged(nameof(Content));
         OnPropertyChanged(nameof(Title));
+    }
+
+    private void OpenFile()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*"
+        };
+        
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            var content = File.ReadAllText(dlg.FileName);
+            Document = new DocumentModel 
+            { 
+                FilePath = dlg.FileName, 
+                Content = content, 
+                IsDirty = false 
+            };
+            OnPropertyChanged(nameof(Content));
+            OnPropertyChanged(nameof(Title));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Open failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void Save(bool saveAs)

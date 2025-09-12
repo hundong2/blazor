@@ -12,6 +12,8 @@
     <!-- Material Design in XAML Toolkit -->
     <PackageReference Include="MaterialDesignThemes" Version="5.*" />
     <PackageReference Include="MaterialDesignColors" Version="5.*" />
+    <!-- AvalonEdit for advanced text editing -->
+    <PackageReference Include="AvalonEdit" Version="6.*" />
   </ItemGroup>
 
 </Project>

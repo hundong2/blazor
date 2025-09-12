@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:vm="clr-namespace:wpf.ViewModels"
+        xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="JSON Editor"
+        Title="JSON Editor - AvalonEdit (Real-time Highlight)"
         Height="600" Width="900"
         WindowStartupLocation="CenterScreen"
         materialDesign:ColorZoneAssist.Mode="PrimaryDark">
@@ -19,14 +20,16 @@
             <DockPanel>
                 <Menu DockPanel.Dock="Left">
                     <MenuItem Header="_File">
-                        <MenuItem Header="_New" Command="{Binding NewCommand}" />
+                        <MenuItem Header="_New" Command="{Binding NewCommand}" InputGestureText="Ctrl+N" />
+                        <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O" />
+                        <Separator />
                         <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S" />
-                        <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
+                        <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" InputGestureText="Ctrl+Shift+S" />
                         <Separator />
                         <MenuItem Header="E_xit" Command="{x:Static ApplicationCommands.Close}" />
                     </MenuItem>
                     <MenuItem Header="_Edit">
-                        <MenuItem Header="Format JSON" Command="{Binding FormatJsonCommand}" />
+                        <MenuItem Header="Format JSON" Command="{Binding FormatJsonCommand}" InputGestureText="Ctrl+Shift+F" />
                     </MenuItem>
                     <MenuItem Header="_Settings" />
                 </Menu>
@@ -45,32 +48,45 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- AvalonEdit TextEditor -->
+            <Border Grid.Row="0" BorderBrush="Gray" BorderThickness="1">
+                <avalonedit:TextEditor x:Name="JsonEditor"
+                                       FontFamily="Consolas"
+                                       FontSize="14"
+                                       ShowLineNumbers="True"
+                                       SyntaxHighlighting="JavaScript"
+                                       WordWrap="False"
+                                       HorizontalScrollBarVisibility="Auto"
+                                       VerticalScrollBarVisibility="Auto"
+                                       Background="White"
+                                       Foreground="Black"
+                                       LineNumbersForeground="Gray"/>
+            </Border>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <TextBox x:Name="Editor"
-                             AcceptsReturn="True"
-                             AcceptsTab="True"
-                             HorizontalScrollBarVisibility="Auto"
-                             VerticalScrollBarVisibility="Auto"
-                             TextWrapping="NoWrap"
-                             FontFamily="Consolas"
-                             FontSize="14"
-                             Text="{Binding Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Edit JSON here"
-                             materialDesign:TextFieldAssist.DecorationVisibility="Hidden"/>
-                </ScrollViewer>
-            </Grid>
-
-            <!-- Status / Search highlight -->
-            <DockPanel Grid.Row="1" Margin="8">
-                <TextBlock VerticalAlignment="Center" Text="Highlight (미구현):" Margin="0,0,8,0"/>
-                <TextBox Width="200" x:Name="HighlightBox" />
-                <Button Margin="8,0,0,0" Content="Format" Command="{Binding FormatJsonCommand}" />
-            </DockPanel>
+            <!-- Search/Highlight Controls -->
+            <materialDesign:ColorZone Grid.Row="1" Mode="PrimaryMid" Padding="8">
+                <DockPanel>
+                    <TextBlock VerticalAlignment="Center" 
+                               Text="Real-time Highlight:" 
+                               Margin="0,0,8,0"
+                               Foreground="White"/>
+                    <TextBox Width="200" 
+                             x:Name="HighlightBox"
+                             materialDesign:HintAssist.Hint="Type to highlight instantly"
+                             Margin="0,0,8,0"/>
+                    <TextBlock VerticalAlignment="Center" 
+                               Text="{Binding HighlightTerm, StringFormat='Current: &quot;{0}&quot;'}"
+                               Margin="0,0,8,0"
+                               Foreground="White"
+                               FontStyle="Italic"/>
+                    <Button Content="Clear Highlights" 
+                            x:Name="ClearHighlightButton"
+                            Margin="0,0,8,0"/>
+                    <Button Content="Format JSON" 
+                            Command="{Binding FormatJsonCommand}"
+                            materialDesign:ButtonAssist.CornerRadius="3"/>
+                </DockPanel>
+            </materialDesign:ColorZone>
         </Grid>
     </DockPanel>
 </Window>
