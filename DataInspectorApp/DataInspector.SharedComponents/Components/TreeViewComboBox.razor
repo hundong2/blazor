@@ -1,0 +1,124 @@
+@using DataInspector.SharedComponents.Models
+@using MudBlazor
+
+<div class="treeview-combobox" style="position: relative;">
+    <MudTextField T="string"
+                  Label="@Label"
+                  Variant="Variant.Outlined"
+                  Value="@(SelectedItem?.Name)"
+                  ReadOnly="true"
+                  OnClick="@TogglePopover"
+                  Adornment="Adornment.End"
+                  AdornmentIcon="@Icons.Material.Filled.ArrowDropDown"
+                  AdornmentAriaLabel="Show/Hide Tree" />
+
+    <MudPopover Open="@_popoverOpen"
+                AnchorOrigin="Origin.BottomLeft"
+                TransformOrigin="Origin.TopLeft"
+                Class="px-2 pt-2"
+                Paper="true"
+                Style="width: 100%; max-height: 400px; overflow-y: auto;">
+        <MudTextField T="string"
+                      @bind-Value="_searchText"
+                      OnInput="@((e) => OnSearchTextChanged(e.Value?.ToString()))"
+                      Placeholder="Search..."
+                      Variant="Variant.Outlined"
+                      DebounceInterval="200"
+                      Class="mb-2" />
+
+        @if (_filteredItems.Any())
+        {
+            <MudTreeView T="TreeItem" Items="_filteredItems" Dense="true" Hover="true" ActivatedValue="SelectedItem" ActivatedValueChanged="OnItemSelected">
+                <ItemTemplate>
+                    <MudTreeViewItem Items="@context.Children" Value="@context">
+                        <Content>
+                            <MudTreeViewItemToggleButton Expanded="@context.Children.Any()" Visible="@(context.Children.Any())" />
+                            <MudText>@context.Name</MudText>
+                        </Content>
+                    </MudTreeViewItem>
+                </ItemTemplate>
+            </MudTreeView>
+        }
+        else
+        {
+            <MudText Align="Align.Center" Class="pa-4">No matching items found.</MudText>
+        }
+    </MudPopover>
+</div>
+
+@code {
+    [Parameter]
+    public HashSet<TreeItem> Items { get; set; } = new HashSet<TreeItem>();
+
+    [Parameter]
+    public TreeItem SelectedItem { get; set; }
+
+    [Parameter]
+    public EventCallback<TreeItem> SelectedItemChanged { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    private bool _popoverOpen;
+    private string _searchText;
+    private HashSet<TreeItem> _filteredItems;
+
+    protected override void OnInitialized()
+    {
+        _filteredItems = Items;
+    }
+
+    private void OnSearchTextChanged(string newText)
+    {
+        _searchText = newText;
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            _filteredItems = Items;
+        }
+        else
+        {
+            _filteredItems = Filter(Items, _searchText);
+        }
+        StateHasChanged();
+    }
+
+    private HashSet<TreeItem> Filter(IEnumerable<TreeItem> source, string term)
+    {
+        var results = new HashSet<TreeItem>();
+        if (source == null) return results;
+
+        foreach (var item in source)
+        {
+            var filteredChildren = Filter(item.Children, term);
+
+            bool isMatch = item.Name.Contains(term, StringComparison.OrdinalIgnoreCase) || filteredChildren.Any();
+
+            if (isMatch)
+            {
+                var newItem = new TreeItem(item.Id, item.Name, item.Parent)
+                {
+                    Children = filteredChildren,
+                };
+                results.Add(newItem);
+            }
+        }
+        return results;
+    }
+
+    private async Task OnItemSelected(TreeItem item)
+    {
+        SelectedItem = item;
+        await SelectedItemChanged.InvokeAsync(SelectedItem);
+        _popoverOpen = false;
+        OnSearchTextChanged(string.Empty);
+    }
+
+    private void TogglePopover()
+    {
+        _popoverOpen = !_popoverOpen;
+        if (!_popoverOpen)
+        {
+            OnSearchTextChanged(string.Empty);
+        }
+    }
+}

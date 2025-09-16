@@ -6,6 +6,20 @@
 
 <PageTitle>Data Inspector - Main</PageTitle>
 
+<MudCard Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">TreeView ComboBox Demonstration</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <TreeViewComboBox Label="Select a File or Folder"
+                          Items="@_treeData"
+                          @bind-SelectedItem="_selectedTreeItem" />
+        <MudText Class="mt-4">Selected: @(_selectedTreeItem?.Name ?? "None")</MudText>
+    </MudCardContent>
+</MudCard>
+
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
     <MudText Typo="Typo.h5" GutterBottom="true" Class="mb-4">Data Items Dashboard</MudText>
 
@@ -19,10 +33,39 @@
     private IEnumerable<DataItem> FilteredItems { get; set; } = new List<DataItem>();
     private FilterCriteria CurrentFilters { get; set; } = new FilterCriteria();
 
+    private TreeItem _selectedTreeItem;
+    private HashSet<TreeItem> _treeData = new HashSet<TreeItem>();
+
+    private void LoadTreeData()
+    {
+        var root1 = new TreeItem("1", "Documents");
+        var sub1_1 = new TreeItem("1.1", "Work", root1);
+        var sub1_2 = new TreeItem("1.2", "Personal", root1);
+        root1.Children.Add(sub1_1);
+        root1.Children.Add(sub1_2);
+
+        var sub1_1_1 = new TreeItem("1.1.1", "Report.docx", sub1_1);
+        var sub1_1_2 = new TreeItem("1.1.2", "Presentation.pptx", sub1_1);
+        sub1_1.Children.Add(sub1_1_1);
+        sub1_1.Children.Add(sub1_1_2);
+
+        var sub1_2_1 = new TreeItem("1.2.1", "Vacation-Photos", sub1_2);
+        var sub1_2_1_1 = new TreeItem("1.2.1.1", "image1.jpg", sub1_2_1);
+        sub1_2_1.Children.Add(sub1_2_1_1);
+        sub1_2.Children.Add(sub1_2_1);
+
+        var root2 = new TreeItem("2", "Downloads");
+        var sub2_1 = new TreeItem("2.1", "setup.exe", root2);
+        root2.Children.Add(sub2_1);
+
+        _treeData = new HashSet<TreeItem> { root1, root2 };
+    }
+
     protected override void OnInitialized()
     {
         LoadMockData();
         ApplyFilters();
+        LoadTreeData();
     }
 
     private void LoadMockData()

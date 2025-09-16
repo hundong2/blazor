@@ -1,104 +1,72 @@
-# blazor
-Blazor web application
+# Blazor MAUI & MudBlazor: Searchable TreeView ComboBox Template
 
-![Alt](https://repobeats.axiom.co/api/embed/3fb2a30ba5d2cf6e59b80eb973864b50f2c35ada.svg "Repobeats analytics image")
+Welcome! This project demonstrates how to build a searchable TreeView ComboBox in a Blazor Hybrid MAUI application using the MudBlazor component library. It's designed to be a starting point for developers new to Blazor and MudBlazor.
 
-## Getting start 
+This project was adapted from an existing structure to specifically showcase this custom component.
 
-- make project 
-    - `dotnet new blazorserver -o <name> --no-https`
-- publish project 
-    - `dotnet publish --configuration Release`
-- run program
-    - `dotnet bin/Release/net7.0/publish/BlazorAppLee.dll`
-  
-## docker 
+## Features
 
-- build blazorapp 
+*   **Blazor Hybrid with .NET MAUI:** Run your Blazor components natively on desktop and mobile.
+*   **MudBlazor Integration:** A beautiful Material Design component library, pre-configured and ready to use.
+*   **Searchable TreeView ComboBox:** A custom-built component that allows users to select items from a hierarchical list with a powerful search/filter capability.
 
-```
-docker build -t blazorapp .
-```
+## How It Was Built (Development Steps)
 
-- docker run 
+This document outlines the steps taken to add the custom component to this project.
 
-```
-docker run -it -p 5001:5001 blazorapp
-```
+1.  **Project Analysis:** The initial step was to analyze the existing solution to identify the main MAUI project (`DataInspector.MAUI`) and the shared Razor component library (`DataInspector.SharedComponents`). It was discovered that MudBlazor was already installed but not fully configured.
 
-```
-docker run -d -p 5001:5001 blazorapp
-```
+2.  **Add MudBlazor Static Assets:** The required CSS and JavaScript files for MudBlazor were added to `DataInspectorApp/DataInspector.MAUI/wwwroot/index.html` to enable proper rendering of the components.
 
-## docker compose
+3.  **Create Data Models:** A simple C# class (`TreeItem.cs`) was created in `DataInspector.SharedComponents/Models` to represent the hierarchical data for the TreeView.
 
-- install docker-compose
+    ```csharp
+    // DataInspector.SharedComponents/Models/TreeItem.cs
+    public class TreeItem
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public HashSet<TreeItem> Children { get; set; } = new HashSet<TreeItem>();
+        // ... constructors ...
+    }
+    ```
 
-```sh
-sudo apt install docker-compose -y 
-```
+4.  **Build the TreeView ComboBox Component:** A new component, `TreeViewComboBox.razor`, was created in `DataInspector.SharedComponents/Components/`. This component encapsulates all the logic for rendering the tree, filtering nodes based on user input, and managing the selection. The filtering logic recursively builds a new tree containing only items that match the search term or have children that match.
 
-- build 
+5.  **Demonstrate the Component:** The new `TreeViewComboBox` was added to the main page (`DataInspector.SharedComponents/Pages/MainPage.razor`) with sample data to show how it works.
 
-```sh
-docker-compose build
-```
+    ```razor
+    // DataInspector.SharedComponents/Pages/MainPage.razor
+    <TreeViewComboBox Label="Select a File or Folder"
+                      Items="@_treeData"
+                      @bind-SelectedItem="_selectedTreeItem" />
 
-- run
+    <MudText Class="mt-4">Selected: @(_selectedTreeItem?.Name ?? "None")</MudText>
+    ```
 
-```sh
-docker-compose up
-```
+## TODO / Future Enhancements
 
-- build & run 
+Here are some ideas for extending this project:
 
-```sh
-docker-compose up --build
-```
+*   **Dynamic Data Loading:** Modify the TreeView to load its data from an API instead of a hardcoded list.
+*   **Advanced Selection Logic:** Implement logic to handle multi-selection or checkbox-based selection within the tree.
+*   **State Persistence:** Save the last selected item in the browser's local storage and restore it on the next visit.
+*   **Virtualization:** For very large trees, implement virtualization to only render the visible nodes, improving performance.
+*   **Improve Styling:** Customize the theme further or add component-specific styles for a unique look and feel.
 
-## setting 
+## References & Learning Resources
 
->## Tutorial/Reference
->>### Blazor tutorial
->>> https://dotnet.microsoft.com/ko-kr/learn/aspnet/blazor-tutorial/run
->>### using Nginx with ubuntu 
->>>https://learn.microsoft.com/ko-kr/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-8.0&tabs=linux-ubuntu
->>### blazor with NGINX Server
-https://2kiju.tistory.com/59
->>### reference 
-https://learn.microsoft.com/ko-kr/training/paths/aspnet-core-minimal-api/
-https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0
-https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0
-https://www.youtube.com/watch?v=bXK-F-uL7Qo
-### docker reference ( compose up )
-https://docs.docker.com/reference/cli/docker/compose/up/
+To understand the concepts used in this project, please refer to the following resources:
 
-## Tutorial/Reference
-### Blazor tutorial
-https://dotnet.microsoft.com/ko-kr/learn/aspnet/blazor-tutorial/run
+*   **Blazor Basics:**
+    *   [Introduction to ASP.NET Core Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor/)
+    *   [Build a .NET MAUI Blazor Hybrid app](https://learn.microsoft.com/en-us/dotnet/maui/tutorials/blazor-hybrid)
+*   **MudBlazor:**
+    *   [Official Documentation](https://mudblazor.com/)
+    *   [TreeView Component](https://mudblazor.com/components/treeview)
+    *   [Popover Component](https://mudblazor.com/components/popover)
+*   **C# & .NET:**
+    *   [C# LINQ for data filtering](https://learn.microsoft.com/en-us/dotnet/csharp/linq/)
 
-### using Nginx with ubuntu
-https://learn.microsoft.com/ko-kr/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-8.0&tabs=linux-ubuntu
-
-### blazor with NGINX Server
-https://2kiju.tistory.com/59
-
-### reference
-https://learn.microsoft.com/ko-kr/training/paths/aspnet-core-minimal-api/ https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0 https://learn.microsoft.com/ko-kr/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0 https://www.youtube.com/watch?v=bXK-F-uL7Qo
-
-## Daily note
-
-> 2024-11-11 https://learn.microsoft.com/ko-kr/aspnet/core/razor-pages/?view=aspnetcore-8.0&tabs=visual-studio
->> https://learn.microsoft.com/ko-kr/aspnet/core/razor-pages/?view=aspnetcore-8.0&tabs=visual-studio
-
-
-## Blazor Study 
-
-https://blazor-university.com/overview/what-is-blazor/
-https://github.com/IEvangelist/learning-blazor
-https://forum.dotnetdev.kr/t/blazor/5253/13
-https://learn.microsoft.com/ko-kr/training/modules/build-blazor-todo-list/2-data-binding
-
-## ETC Freecodecamp
-
-https://www.freecodecamp.org/learn/project-euler/project-euler-problems-1-to-100/problem-1-multiples-of-3-or-5
+---
+*This README is now complete.*
