@@ -2,18 +2,149 @@
 
 <PageTitle>BlazorAppLee</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+<!-- BlazorBootstrap 네비게이션 바 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <Icon Name="IconName.House" Class="me-2" />
+            BlazorAppLee
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <Icon Name="IconName.House" Class="me-1" />
+                        Home
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="counter">
+                        <Icon Name="IconName.PlusCircle" Class="me-1" />
+                        Counter
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="component">
+                        <Icon Name="IconName.ListUl" Class="me-1" />
+                        Component List
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="fetchdata">
+                        <Icon Name="IconName.Database" Class="me-1" />
+                        Fetch Data
+                    </NavLink>
+                </li>
+            </ul>
+            
+            <!-- 사용자 인증 영역 -->
+            <ul class="navbar-nav">
+                <AuthorizeView>
+                    <Authorized>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <Icon Name="IconName.PersonCircle" Class="me-1" />
+                                @context.User.Identity?.Name
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="Identity/Account/Manage">
+                                        <Icon Name="IconName.Gear" Class="me-2" />
+                                        계정 관리
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="Identity/Account/Logout" method="post" class="d-inline">
+                                        <AntiforgeryToken />
+                                        <button type="submit" class="dropdown-item">
+                                            <Icon Name="IconName.BoxArrowRight" Class="me-2" />
+                                            로그아웃
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    </Authorized>
+                    <NotAuthorized>
+                        <li class="nav-item">
+                            <a class="nav-link" href="Identity/Account/Register">
+                                <Icon Name="IconName.PersonPlus" Class="me-1" />
+                                Register
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="Identity/Account/Login">
+                                <Icon Name="IconName.BoxArrowInRight" Class="me-1" />
+                                Login
+                            </a>
+                        </li>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </ul>
         </div>
+    </div>
+</nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<!-- 메인 콘텐츠 영역 -->
+<main class="container-fluid py-3">
+    @Body
+</main>
+
+<!-- 푸터 -->
+<footer class="bg-light border-top mt-auto py-3">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <small class="text-muted">
+                    © 2025 BlazorAppLee. All rights reserved.
+                </small>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    Built with 
+                    <Icon Name="IconName.Heart" Class="text-danger" />
+                    using Blazor & Bootstrap
+                </small>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    
+    main {
+        flex: 1;
+    }
+    
+    .navbar-brand {
+        font-weight: bold;
+    }
+    
+    .nav-link {
+        border-radius: 0.375rem;
+        margin: 0 0.125rem;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+    }
+</style>

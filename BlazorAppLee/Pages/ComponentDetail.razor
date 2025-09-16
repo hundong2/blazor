@@ -1,0 +1,321 @@
+@page "/component/detail/{ItemId:int}"
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>상세 정보</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb -->
+            <Breadcrumb>
+                <BreadcrumbItem Href="/component">
+                    <Icon Name="IconName.List" Class="me-1" />
+                    목록
+                </BreadcrumbItem>
+                <BreadcrumbItem IsActive="true">상세 정보</BreadcrumbItem>
+            </Breadcrumb>
+
+            @if (currentItem != null)
+            {
+                <!-- 상세 정보 카드 -->
+                <Card Class="shadow-sm">
+                    <CardHeader Class="bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <Icon Name="@GetIconForCategory(currentItem.Category)" Class="me-2" Size="IconSize.x2" />
+                                <h4 class="mb-0">@currentItem.Title</h4>
+                            </div>
+                            <Badge Color="BadgeColor.Light" TextColor="TextColor.Dark">ID: @currentItem.Id</Badge>
+                        </div>
+                    </CardHeader>
+                    
+                    <CardBody>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="text-muted mb-2">
+                                    <Icon Name="IconName.FileText" Class="me-1" />
+                                    설명
+                                </h6>
+                                <p class="mb-4">@currentItem.Description</p>
+                                
+                                <h6 class="text-muted mb-2">
+                                    <Icon Name="IconName.FileEarmark" Class="me-1" />
+                                    상세 내용
+                                </h6>
+                                <Alert Color="AlertColor.Info" Class="mb-4">
+                                    <div>
+                                        <p class="mb-2">
+                                            <strong>@currentItem.Title</strong>에 대한 상세 정보입니다.
+                                        </p>
+                                        <p class="mb-2">
+                                            이 항목은 <strong>@currentItem.Category</strong> 카테고리에 속하며, 
+                                            현재 상태는 <Badge Color="@GetBadgeColor(currentItem.Status)">@currentItem.Status</Badge> 입니다.
+                                        </p>
+                                        <p class="mb-0">
+                                            실제 프로젝트에서는 이 영역에 데이터베이스나 API에서 가져온 
+                                            더 상세한 내용이 표시됩니다.
+                                        </p>
+                                    </div>
+                                </Alert>
+
+                                <!-- 관련 작업 -->
+                                <h6 class="text-muted mb-2 mt-4">
+                                    <Icon Name="IconName.CheckSquare" Class="me-1" />
+                                    관련 작업
+                                </h6>
+                                <ListGroup Class="mb-3">
+                                    @foreach (var task in GetRelatedTasks())
+                                    {
+                                        <ListGroupItem Class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <Icon Name="IconName.Circle" Class="me-2 text-muted" Size="IconSize.x1" />
+                                                @task
+                                            </span>
+                                            <Badge Color="BadgeColor.Secondary">대기</Badge>
+                                        </ListGroupItem>
+                                    }
+                                </ListGroup>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- 기본 정보 -->
+                                <Card Class="bg-light">
+                                    <CardHeader>
+                                        <CardTitle>
+                                            <Icon Name="IconName.InfoCircle" Class="me-1" />
+                                            기본 정보
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-4">ID:</dt>
+                                            <dd class="col-sm-8">@currentItem.Id</dd>
+                                            
+                                            <dt class="col-sm-4">카테고리:</dt>
+                                            <dd class="col-sm-8">
+                                                <Badge Color="BadgeColor.Primary">@currentItem.Category</Badge>
+                                            </dd>
+                                            
+                                            <dt class="col-sm-4">상태:</dt>
+                                            <dd class="col-sm-8">
+                                                <Badge Color="@GetBadgeColor(currentItem.Status)">@currentItem.Status</Badge>
+                                            </dd>
+                                            
+                                            <dt class="col-sm-4">생성일:</dt>
+                                            <dd class="col-sm-8">@currentItem.CreatedDate.ToString("yyyy-MM-dd")</dd>
+                                            
+                                            <dt class="col-sm-4">생성시간:</dt>
+                                            <dd class="col-sm-8">@currentItem.CreatedDate.ToString("HH:mm:ss")</dd>
+                                        </dl>
+                                    </CardBody>
+                                </Card>
+
+                                <!-- 진행률 -->
+                                <Card Class="bg-light mt-3">
+                                    <CardHeader>
+                                        <CardTitle>
+                                            <Icon Name="IconName.BarChart" Class="me-1" />
+                                            진행률
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <ProgressBar Value="@GetProgressValue(currentItem.Status)" 
+                                                   Color="@GetProgressColor(currentItem.Status)"
+                                                   Class="mb-2" />
+                                        <small class="text-muted">@GetProgressText(currentItem.Status)</small>
+                                    </CardBody>
+                                </Card>
+
+                                <!-- 액션 버튼들 -->
+                                <Card Class="bg-light mt-3">
+                                    <CardHeader>
+                                        <CardTitle>
+                                            <Icon Name="IconName.Gear" Class="me-1" />
+                                            액션
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <div class="d-grid gap-2">
+                                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small">
+                                                <Icon Name="IconName.PencilSquare" Class="me-1" />
+                                                편집
+                                            </Button>
+                                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small">
+                                                <Icon Name="IconName.Share" Class="me-1" />
+                                                공유
+                                            </Button>
+                                            <Button Color="ButtonColor.Warning" Size="ButtonSize.Small">
+                                                <Icon Name="IconName.Download" Class="me-1" />
+                                                다운로드
+                                            </Button>
+                                        </div>
+                                    </CardBody>
+                                </Card>
+                            </div>
+                        </div>
+                    </CardBody>
+                    
+                    <CardFooter>
+                        <div class="d-flex justify-content-between">
+                            <Button Color="ButtonColor.Secondary" @onclick="GoBack">
+                                <Icon Name="IconName.ChevronLeft" Class="me-1" />
+                                뒤로가기
+                            </Button>
+                            <div>
+                                <Button Color="ButtonColor.Primary" Outline="true" Class="me-2">
+                                    <Icon Name="IconName.PencilSquare" Class="me-1" />
+                                    편집
+                                </Button>
+                                <Button Color="ButtonColor.Danger" Outline="true">
+                                    <Icon Name="IconName.Trash" Class="me-1" />
+                                    삭제
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+            }
+            else
+            {
+                <!-- 항목을 찾을 수 없는 경우 -->
+                <Alert Color="AlertColor.Warning" Class="text-center">
+                    <Icon Name="IconName.ExclamationTriangle" Size="IconSize.x3" Class="mb-3" />
+                    <h5 class="mt-3">항목을 찾을 수 없습니다</h5>
+                    <p class="mb-3">요청하신 항목(ID: @ItemId)이 존재하지 않습니다.</p>
+                    <Button Color="ButtonColor.Primary" @onclick="GoBack">
+                        <Icon Name="IconName.ChevronLeft" Class="me-1" />
+                        목록으로 돌아가기
+                    </Button>
+                </Alert>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int ItemId { get; set; }
+    
+    private DataItem? currentItem;
+    private bool isJSRuntimeReady = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Blazor Server 연결이 완전히 초기화될 때까지 대기
+            await Task.Delay(100);
+            isJSRuntimeReady = true;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // 샘플 데이터에서 해당 ID의 항목 찾기
+        var sampleData = GetSampleData();
+        currentItem = sampleData.FirstOrDefault(x => x.Id == ItemId);
+    }
+
+    private async Task GoBack()
+    {
+        // JavaScript interop 없이 직접 네비게이션 사용
+        Navigation.NavigateTo("/component");
+    }
+
+    private List<DataItem> GetSampleData()
+    {
+        return new List<DataItem>
+        {
+            new DataItem { Id = 1, Title = "프로젝트 기획서", Description = "새로운 웹 애플리케이션 개발을 위한 기획서입니다.", Category = "문서", Status = "완료", CreatedDate = DateTime.Now.AddDays(-10) },
+            new DataItem { Id = 2, Title = "API 설계", Description = "RESTful API 설계 및 명세서 작성", Category = "개발", Status = "진행중", CreatedDate = DateTime.Now.AddDays(-8) },
+            new DataItem { Id = 3, Title = "데이터베이스 스키마", Description = "MySQL 데이터베이스 테이블 설계", Category = "개발", Status = "완료", CreatedDate = DateTime.Now.AddDays(-7) },
+            new DataItem { Id = 4, Title = "UI/UX 디자인", Description = "사용자 인터페이스 디자인 가이드", Category = "디자인", Status = "대기", CreatedDate = DateTime.Now.AddDays(-5) },
+            new DataItem { Id = 5, Title = "테스트 계획", Description = "단위 테스트 및 통합 테스트 계획서", Category = "테스트", Status = "진행중", CreatedDate = DateTime.Now.AddDays(-3) },
+            new DataItem { Id = 6, Title = "보안 점검", Description = "애플리케이션 보안 취약점 분석", Category = "보안", Status = "대기", CreatedDate = DateTime.Now.AddDays(-2) },
+            new DataItem { Id = 7, Title = "배포 가이드", Description = "프로덕션 환경 배포 절차서", Category = "운영", Status = "완료", CreatedDate = DateTime.Now.AddDays(-1) },
+            new DataItem { Id = 8, Title = "사용자 매뉴얼", Description = "최종 사용자를 위한 사용법 가이드", Category = "문서", Status = "진행중", CreatedDate = DateTime.Now }
+        };
+    }
+
+    private IconName GetIconForCategory(string category)
+    {
+        return category switch
+        {
+            "문서" => IconName.FileEarmark,
+            "개발" => IconName.Code,
+            "디자인" => IconName.Palette,
+            "테스트" => IconName.CheckSquare,
+            "보안" => IconName.Shield,
+            "운영" => IconName.Gear,
+            _ => IconName.File
+        };
+    }
+
+    private BadgeColor GetBadgeColor(string status)
+    {
+        return status switch
+        {
+            "완료" => BadgeColor.Success,
+            "진행중" => BadgeColor.Warning,
+            "대기" => BadgeColor.Secondary,
+            _ => BadgeColor.Primary
+        };
+    }
+
+    private ProgressColor GetProgressColor(string status)
+    {
+        return status switch
+        {
+            "완료" => ProgressColor.Success,
+            "진행중" => ProgressColor.Warning,
+            "대기" => ProgressColor.Secondary,
+            _ => ProgressColor.Primary
+        };
+    }
+
+    private int GetProgressValue(string status)
+    {
+        return status switch
+        {
+            "완료" => 100,
+            "진행중" => 60,
+            "대기" => 0,
+            _ => 30
+        };
+    }
+
+    private string GetProgressText(string status)
+    {
+        return status switch
+        {
+            "완료" => "작업이 완료되었습니다.",
+            "진행중" => "작업이 진행 중입니다.",
+            "대기" => "작업 대기 중입니다.",
+            _ => "알 수 없는 상태입니다."
+        };
+    }
+
+    private List<string> GetRelatedTasks()
+    {
+        return currentItem?.Category switch
+        {
+            "문서" => new List<string> { "검토", "승인", "배포" },
+            "개발" => new List<string> { "코드 리뷰", "테스트", "배포" },
+            "디자인" => new List<string> { "피드백 수집", "수정", "최종 승인" },
+            "테스트" => new List<string> { "테스트 실행", "버그 수정", "재테스트" },
+            "보안" => new List<string> { "취약점 분석", "보완 조치", "재점검" },
+            "운영" => new List<string> { "배포 준비", "모니터링", "유지보수" },
+            _ => new List<string> { "검토", "처리", "완료" }
+        };
+    }
+
+    public class DataItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedDate { get; set; }
+    }
+}

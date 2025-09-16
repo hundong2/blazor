@@ -1,0 +1,317 @@
+﻿@page "/component"
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>Component List</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0">
+                    <Icon Name="IconName.ListUl" Class="me-2" />
+                    데이터 목록
+                </h3>
+                <Button Color="ButtonColor.Primary" @onclick="RefreshData">
+                    <Icon Name="IconName.ArrowClockwise" Class="me-1" />
+                    새로고침
+                </Button>
+            </div>
+            
+            <!-- 검색 필터 -->
+            <Card Class="mb-4">
+                <CardBody>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <Icon Name="IconName.Search" />
+                                </span>
+                                <input type="text" class="form-control" placeholder="제목 검색..." 
+                                       @bind="searchTerm" @oninput="OnSearchChanged" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" @bind="selectedCategory" @bind:after="ApplyFilters">
+                                <option value="">모든 카테고리</option>
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <Button Color="ButtonColor.Secondary" Outline="true" Class="w-100" @onclick="ClearFilters">
+                                <Icon Name="IconName.X" Class="me-1" />
+                                초기화
+                            </Button>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+
+            <!-- ListView -->
+            @if (filteredItems.Any())
+            {
+                <ListGroup>
+                    @foreach (var item in filteredItems)
+                    {
+                        <ListGroupItem Class="@($"list-group-item-action {(hoveredItemId == item.Id ? "list-group-item-light" : "")}")"
+                                     Style="cursor: pointer; transition: all 0.2s ease;"
+                                     @ondblclick="() => NavigateToDetail(item.Id)"
+                                     @onmouseover="() => hoveredItemId = item.Id"
+                                     @onmouseout="() => hoveredItemId = null">
+                            
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <Icon Name="@GetIconForCategory(item.Category)" 
+                                              Class="text-primary" 
+                                              Size="IconSize.x2" />
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">@item.Title</h6>
+                                        <p class="mb-1 text-muted">@item.Description</p>
+                                        <small class="text-muted">
+                                            <Icon Name="IconName.Calendar" Class="me-1" />
+                                            @item.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex align-items-center">
+                                    <Badge Color="BadgeColor.Primary" Class="me-2">@item.Category</Badge>
+                                    <Badge Color="@GetBadgeColor(item.Status)" Class="me-2">@item.Status</Badge>
+                                    @if (hoveredItemId == item.Id)
+                                    {
+                                        <Icon Name="IconName.ChevronRight" Class="text-primary" />
+                                    }
+                                </div>
+                            </div>
+                        </ListGroupItem>
+                    }
+                </ListGroup>
+            }
+            else
+            {
+                <Alert Color="AlertColor.Info" Class="text-center">
+                    <Icon Name="IconName.Inbox" Size="IconSize.x3" Class="mb-3" />
+                    <p class="mb-0">@GetEmptyMessage()</p>
+                </Alert>
+            }
+
+            <!-- 페이지네이션 -->
+            @if (filteredItems.Count() > itemsPerPage)
+            {
+                <nav aria-label="Page navigation" class="mt-4">
+                    <Pagination ActivePageNumber="@currentPage"
+                               TotalPages="@totalPages"
+                               PageChanged="OnPageChanged"
+                               Alignment="Alignment.Center" />
+                </nav>
+            }
+
+            <!-- 통계 정보 -->
+            <Card Class="mt-4 bg-light">
+                <CardBody>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <Icon Name="IconName.FileEarmark" Size="IconSize.x2" Class="text-primary" />
+                            <h5 class="mt-2">@dataItems.Count</h5>
+                            <small class="text-muted">전체 항목</small>
+                        </div>
+                        <div class="col-md-3">
+                            <Icon Name="IconName.CheckCircle" Size="IconSize.x2" Class="text-success" />
+                            <h5 class="mt-2">@dataItems.Count(x => x.Status == "완료")</h5>
+                            <small class="text-muted">완료</small>
+                        </div>
+                        <div class="col-md-3">
+                            <Icon Name="IconName.Clock" Size="IconSize.x2" Class="text-warning" />
+                            <h5 class="mt-2">@dataItems.Count(x => x.Status == "진행중")</h5>
+                            <small class="text-muted">진행중</small>
+                        </div>
+                        <div class="col-md-3">
+                            <Icon Name="IconName.Pause" Size="IconSize.x2" Class="text-secondary" />
+                            <h5 class="mt-2">@dataItems.Count(x => x.Status == "대기")</h5>
+                            <small class="text-muted">대기</small>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<DataItem> dataItems = new();
+    private List<DataItem> filteredItems = new();
+    private List<string> categories = new();
+    private int? hoveredItemId = null;
+    private string searchTerm = "";
+    private string selectedCategory = "";
+    private int currentPage = 1;
+    private int itemsPerPage = 10;
+    private int totalPages => (int)Math.Ceiling((double)filteredItems.Count() / itemsPerPage);
+
+    // 상태 보존을 위한 정적 필드들
+    private static string _preservedSearchTerm = "";
+    private static string _preservedSelectedCategory = "";
+    private static int _preservedCurrentPage = 1;
+
+    protected override void OnInitialized()
+    {
+        LoadSampleData();
+        categories = dataItems.Select(x => x.Category).Distinct().ToList();
+        
+        // 보존된 상태 복원
+        RestoreState();
+        
+        ApplyFilters();
+        
+        // URL 변경 이벤트 구독
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void RestoreState()
+    {
+        searchTerm = _preservedSearchTerm;
+        selectedCategory = _preservedSelectedCategory;
+        currentPage = _preservedCurrentPage;
+    }
+
+    private void SaveState()
+    {
+        _preservedSearchTerm = searchTerm;
+        _preservedSelectedCategory = selectedCategory;
+        _preservedCurrentPage = currentPage;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // 페이지를 떠날 때 상태 저장
+        SaveState();
+    }
+
+    private void LoadSampleData()
+    {
+        dataItems = new List<DataItem>
+        {
+            new DataItem { Id = 1, Title = "프로젝트 기획서", Description = "새로운 웹 애플리케이션 개발을 위한 기획서입니다.", Category = "문서", Status = "완료", CreatedDate = DateTime.Now.AddDays(-10) },
+            new DataItem { Id = 2, Title = "API 설계", Description = "RESTful API 설계 및 명세서 작성", Category = "개발", Status = "진행중", CreatedDate = DateTime.Now.AddDays(-8) },
+            new DataItem { Id = 3, Title = "데이터베이스 스키마", Description = "MySQL 데이터베이스 테이블 설계", Category = "개발", Status = "완료", CreatedDate = DateTime.Now.AddDays(-7) },
+            new DataItem { Id = 4, Title = "UI/UX 디자인", Description = "사용자 인터페이스 디자인 가이드", Category = "디자인", Status = "대기", CreatedDate = DateTime.Now.AddDays(-5) },
+            new DataItem { Id = 5, Title = "테스트 계획", Description = "단위 테스트 및 통합 테스트 계획서", Category = "테스트", Status = "진행중", CreatedDate = DateTime.Now.AddDays(-3) },
+            new DataItem { Id = 6, Title = "보안 점검", Description = "애플리케이션 보안 취약점 분석", Category = "보안", Status = "대기", CreatedDate = DateTime.Now.AddDays(-2) },
+            new DataItem { Id = 7, Title = "배포 가이드", Description = "프로덕션 환경 배포 절차서", Category = "운영", Status = "완료", CreatedDate = DateTime.Now.AddDays(-1) },
+            new DataItem { Id = 8, Title = "사용자 매뉴얼", Description = "최종 사용자를 위한 사용법 가이드", Category = "문서", Status = "진행중", CreatedDate = DateTime.Now }
+        };
+    }
+
+    private void ApplyFilters()
+    {
+        var items = dataItems.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            items = items.Where(x => x.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                   x.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            items = items.Where(x => x.Category == selectedCategory);
+        }
+
+        filteredItems = items.ToList();
+        
+        // 현재 페이지가 총 페이지 수를 초과하면 첫 페이지로 이동
+        if (currentPage > totalPages && totalPages > 0)
+        {
+            currentPage = 1;
+        }
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        currentPage = 1; // 검색 시 첫 페이지로 이동
+        ApplyFilters();
+    }
+
+    private void ClearFilters()
+    {
+        searchTerm = "";
+        selectedCategory = "";
+        currentPage = 1;
+        ApplyFilters();
+    }
+
+    private void RefreshData()
+    {
+        LoadSampleData();
+        ApplyFilters();
+    }
+
+    private async Task OnPageChanged(int pageNumber)
+    {
+        currentPage = pageNumber;
+        await Task.CompletedTask;
+    }
+
+    private void NavigateToDetail(int itemId)
+    {
+        // 상태 저장 후 네비게이션
+        SaveState();
+        Navigation.NavigateTo($"/component/detail/{itemId}");
+    }
+
+    private IconName GetIconForCategory(string category)
+    {
+        return category switch
+        {
+            "문서" => IconName.FileEarmark,
+            "개발" => IconName.Code,
+            "디자인" => IconName.Palette,
+            "테스트" => IconName.CheckSquare,
+            "보안" => IconName.Shield,
+            "운영" => IconName.Gear,
+            _ => IconName.File
+        };
+    }
+
+    private BadgeColor GetBadgeColor(string status)
+    {
+        return status switch
+        {
+            "완료" => BadgeColor.Success,
+            "진행중" => BadgeColor.Warning,
+            "대기" => BadgeColor.Secondary,
+            _ => BadgeColor.Primary
+        };
+    }
+
+    private string GetEmptyMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(searchTerm) || !string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            return "검색 조건에 맞는 항목이 없습니다.";
+        }
+        return "표시할 데이터가 없습니다.";
+    }
+
+    public void Dispose()
+    {
+        // 이벤트 구독 해제
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    public class DataItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedDate { get; set; }
+    }
+}

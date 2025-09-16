@@ -1,0 +1,537 @@
+﻿@page "/examplecombo"
+@inject NavigationManager Navigation
+@using BlazorBootstrap
+@using BlazorBootstrap.Components
+
+<PageTitle>Example Combo</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- 페이지 제목 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0">
+                    <Icon Name="IconName.Tree" Class="me-2" />
+                    트리 형태 콤보박스 예제
+                </h3>
+            </div>
+
+            <!-- 메인 콤보박스 카드 -->
+            <Card Class="mb-4">
+                <CardHeader>
+                    <h5 class="mb-0">계층적 데이터 선택</h5>
+                </CardHeader>
+                <CardBody>
+                    <!-- 콤보박스 드롭다운 -->
+                    <div class="position-relative">
+                        <div class="dropdown">
+                            <!-- 드롭다운 버튼 -->
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
+                                    type="button" 
+                                    id="treeComboDropdown" 
+                                    data-bs-toggle="dropdown" 
+                                    data-bs-auto-close="false"
+                                    aria-expanded="false"
+                                    style="min-height: 38px;">
+                                <Icon Name="IconName.List" Class="me-2" />
+                                @if (selectedItems.Any())
+                                {
+                                    <span>@selectedItems.Count 개 항목 선택됨</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">항목을 선택하세요</span>
+                                }
+                            </button>
+
+                            <!-- 드롭다운 메뉴 -->
+                            <div class="dropdown-menu w-100 p-3" 
+                                 aria-labelledby="treeComboDropdown" 
+                                 style="max-height: 400px; overflow-y: auto; min-width: 100%;"
+                                 @onclick:stopPropagation="true">
+                                
+                                <!-- 검색 입력 필드 -->
+                                <div class="mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <Icon Name="IconName.Search" />
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               placeholder="검색어를 입력하세요..." 
+                                               @bind="searchTerm" 
+                                               @oninput="OnSearchInput"
+                                               @onclick:stopPropagation="true" />
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(searchTerm))
+                                    {
+                                        <small class="text-muted mt-1 d-block">
+                                            '@searchTerm' 검색 결과
+                                        </small>
+                                    }
+                                </div>
+
+                                <!-- 전체 선택/해제 버튼 -->
+                                <div class="d-flex gap-2 mb-3">
+                                    <button type="button" 
+                                            class="btn btn-primary btn-sm" 
+                                            @onclick="SelectAll"
+                                            @onclick:stopPropagation="true">
+                                        <Icon Name="IconName.CheckAll" Class="me-1" />
+                                        전체 선택
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-secondary btn-sm" 
+                                            @onclick="DeselectAll"
+                                            @onclick:stopPropagation="true">
+                                        <Icon Name="IconName.X" Class="me-1" />
+                                        전체 해제
+                                    </button>
+                                </div>
+
+                                <hr class="my-2" />
+
+                                <!-- 트리 구조 렌더링 -->
+                                @foreach (var parentItem in GetFilteredParentItems())
+                                {
+                                    <div class="tree-item mb-2" @onclick:stopPropagation="true">
+                                        <!-- 부모 항목 -->
+                                        <div class="d-flex align-items-center mb-2 p-2 rounded hover-bg" 
+                                             style="background-color: #f8f9fa;"
+                                             @onclick:stopPropagation="true">
+                                            
+
+                                            <!-- 부모 체크박스 -->
+                                            <input type="checkbox" 
+                                                   class="form-check-input me-2" 
+                                                   checked="@parentItem.IsSelected"
+                                                   @onchange="(e) => OnParentSelectionChanged(parentItem, e)"
+                                                   @onclick:stopPropagation="true" />
+                                            
+                                            <!-- 확장/축소 아이콘 -->
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-link p-0 me-2" 
+                                                    @onclick="(e) => ToggleExpansion(parentItem.Name, e)"
+                                                    @onclick:stopPropagation="true">
+                                                @if (IsExpanded(parentItem.Name))
+                                                {
+                                                    <Icon Name="IconName.ChevronDown" />
+                                                }
+                                                else
+                                                {
+                                                    <Icon Name="IconName.ChevronRight" />
+                                                }
+                                            </button>
+                                            
+                                            <!-- 부모 항목 아이콘과 텍스트 -->
+                                            <Icon Name="IconName.Folder" Class="me-2 text-warning" />
+                                            <strong>@parentItem.Name</strong>
+                                            <Badge Color="BadgeColor.Primary" Class="ms-auto">
+                                                @parentItem.Values.Count
+                                            </Badge>
+                                        </div>
+
+                                        <!-- 자식 항목들 (확장된 경우에만 표시) -->
+                                        @if (IsExpanded(parentItem.Name))
+                                        {
+                                            <div class="ms-4" @onclick:stopPropagation="true">
+                                                @foreach (var childItem in GetFilteredChildItems(parentItem))
+                                                {
+                                                    <div class="d-flex align-items-center mb-1 p-2 rounded hover-child" 
+                                                         style="transition: background-color 0.2s;"
+                                                         @onclick:stopPropagation="true">
+                                                        
+                                                        <!-- 자식 체크박스 -->
+                                                        <input type="checkbox" 
+                                                               class="form-check-input me-2" 
+                                                               checked="@childItem.IsSelected"
+                                                               @onchange="(e) => OnChildSelectionChanged(parentItem, childItem, e)"
+                                                               @onclick:stopPropagation="true" />
+                                                        
+                                                        <!-- 자식 항목 아이콘과 텍스트 -->
+                                                        <Icon Name="IconName.FileEarmark" Class="me-2 text-info" />
+                                                        <span>@childItem.Name</span>
+                                                    </div>
+                                                }
+                                                
+                                                <!-- 자식 항목이 필터링으로 인해 없는 경우 -->
+                                                @if (!GetFilteredChildItems(parentItem).Any() && !string.IsNullOrEmpty(searchTerm))
+                                                {
+                                                    <div class="text-muted fst-italic ms-3">
+                                                        <Icon Name="IconName.InfoCircle" Class="me-1" />
+                                                        검색 조건에 맞는 하위 항목이 없습니다.
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- 검색 결과가 없는 경우 -->
+                                @if (!GetFilteredParentItems().Any() && !string.IsNullOrEmpty(searchTerm))
+                                {
+                                    <div class="text-center text-muted py-3">
+                                        <Icon Name="IconName.Search" Class="mb-2" Size="IconSize.x2" />
+                                        <div>검색 결과가 없습니다.</div>
+                                        <small>다른 검색어를 시도해보세요.</small>
+                                    </div>
+                                }
+
+                                <!-- 드롭다운 닫기 버튼 -->
+                                <div class="d-flex justify-content-end mt-3 pt-2 border-top">
+                                    <button type="button" 
+                                            class="btn btn-success btn-sm" 
+                                            data-bs-toggle="dropdown"
+                                            @onclick:stopPropagation="true">
+                                        <Icon Name="IconName.Check" Class="me-1" />
+                                        완료
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
+
+            <!-- 선택된 항목들 표시 -->
+            <Card>
+                <CardHeader>
+                    <h5 class="mb-0">선택된 항목 목록</h5>
+                </CardHeader>
+                <CardBody>
+                    @if (selectedItems.Any())
+                    {
+                        <div class="row">
+                            @foreach (var item in selectedItems)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-2">
+                                    <div class="d-flex align-items-center p-2 border rounded">
+                                        <Icon Name="IconName.CheckCircle" Class="me-2 text-success" />
+                                        <span class="flex-grow-1">@item</span>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                @onclick="() => RemoveSelectedItem(item)"
+                                                title="제거">
+                                            <Icon Name="IconName.X" />
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- 선택된 항목 통계 -->
+                        <Alert Color="AlertColor.Info" Class="mt-3">
+                            <Icon Name="IconName.InfoCircle" Class="me-2" />
+                            총 <strong>@selectedItems.Count</strong> 개의 항목이 선택되었습니다.
+                        </Alert>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <Icon Name="IconName.ExclamationTriangle" Class="mb-2" Size="IconSize.x2" />
+                            <div>선택된 항목이 없습니다.</div>
+                            <small>위의 콤보박스에서 항목을 선택해주세요.</small>
+                        </div>
+                    }
+                </CardBody>
+            </Card>
+        </div>
+    </div>
+</div>
+
+<!-- 커스텀 스타일 -->
+<style>
+    /* 호버 효과 */
+    .hover-bg:hover {
+        background-color: #e9ecef !important;
+        transition: background-color 0.2s;
+    }
+    
+    .hover-child:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* 드롭다운 메뉴가 클릭으로 닫히지 않도록 */
+    .dropdown-menu {
+        cursor: default;
+    }
+    
+    /* 체크박스 크기 조정 */
+    .form-check-input {
+        transform: scale(1.1);
+    }
+    
+    /* 트리 아이템 들여쓰기 스타일 */
+    .tree-item {
+        border-left: 2px solid #e9ecef;
+        padding-left: 8px;
+    }
+    
+    /* 배지 스타일 */
+    .badge {
+        font-size: 0.75em;
+    }
+
+    /* 체크박스 호버 효과 */
+    .form-check-input:hover {
+        cursor: pointer;
+    }
+
+    /* 확장/축소 버튼 스타일 */
+    .btn-link:hover {
+        background-color: rgba(0,0,0,0.1) !important;
+        border-radius: 4px;
+    }
+</style>
+
+@code {
+    // 데이터 모델 정의
+    public class A
+    {
+        public string Name { get; set; } = "";
+        public List<B> Values { get; set; } = new();
+        public bool IsSelected { get; set; }
+        
+        // 부모의 선택 상태에 따라 모든 자식의 선택 상태를 업데이트
+        public void UpdateChildrenSelection()
+        {
+            foreach (var child in Values)
+            {
+                child.IsSelected = IsSelected;
+            }
+        }
+        
+        // 자식들의 선택 상태에 따라 부모의 선택 상태를 업데이트
+        public void UpdateSelectionFromChildren()
+        {
+            if (Values.Any())
+            {
+                IsSelected = Values.All(b => b.IsSelected);
+            }
+        }
+    }
+    
+    public class B
+    {
+        public string Name { get; set; } = "";
+        public bool IsSelected { get; set; }
+    }
+    
+    // 컴포넌트 상태 변수들
+    private List<A> listValue = new(); // 메인 데이터 리스트
+    private string searchTerm = ""; // 검색어
+    private HashSet<string> expandedItems = new(); // 확장된 부모 항목들
+    private List<string> selectedItems = new(); // 선택된 항목들의 이름 목록
+    
+    // 컴포넌트 초기화
+    protected override void OnInitialized()
+    {
+        InitializeData();
+        base.OnInitialized();
+    }
+    
+    // 샘플 데이터 초기화
+    private void InitializeData()
+    {
+        listValue = new List<A>
+        {
+            new A 
+            { 
+                Name = "개발팀", 
+                Values = new List<B>
+                {
+                    new B { Name = "프론트엔드 개발자" },
+                    new B { Name = "백엔드 개발자" },
+                    new B { Name = "풀스택 개발자" },
+                    new B { Name = "모바일 개발자" }
+                }
+            },
+            new A 
+            { 
+                Name = "디자인팀", 
+                Values = new List<B>
+                {
+                    new B { Name = "UI/UX 디자이너" },
+                    new B { Name = "그래픽 디자이너" },
+                    new B { Name = "웹 디자이너" }
+                }
+            },
+            new A 
+            { 
+                Name = "기획팀", 
+                Values = new List<B>
+                {
+                    new B { Name = "서비스 기획자" },
+                    new B { Name = "사업 기획자" },
+                    new B { Name = "마케팅 기획자" },
+                    new B { Name = "상품 기획자" }
+                }
+            },
+            new A 
+            { 
+                Name = "운영팀", 
+                Values = new List<B>
+                {
+                    new B { Name = "시스템 운영자" },
+                    new B { Name = "데이터베이스 관리자" },
+                    new B { Name = "네트워크 관리자" }
+                }
+            },
+            new A 
+            { 
+                Name = "품질관리팀", 
+                Values = new List<B>
+                {
+                    new B { Name = "QA 엔지니어" },
+                    new B { Name = "테스트 엔지니어" },
+                    new B { Name = "품질 분석가" }
+                }
+            }
+        };
+        
+        // 초기 선택된 항목 목록 업데이트
+        UpdateSelectedItems();
+    }
+    
+    // 검색어 입력 시 호출되는 메서드
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        StateHasChanged(); // UI 업데이트
+    }
+    
+    // 검색어에 따라 필터링된 부모 항목들을 반환
+    private IEnumerable<A> GetFilteredParentItems()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            return listValue;
+        }
+        
+        return listValue.Where(parent => 
+            parent.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            parent.Values.Any(child => child.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        );
+    }
+    
+    // 검색어에 따라 필터링된 자식 항목들을 반환
+    private IEnumerable<B> GetFilteredChildItems(A parent)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            return parent.Values;
+        }
+        
+        return parent.Values.Where(child => 
+            child.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            parent.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+        );
+    }
+    
+    // 부모 항목의 확장/축소 상태를 토글 (이벤트 버블링 방지)
+    private void ToggleExpansion(string parentName, MouseEventArgs e)
+    {
+        if (expandedItems.Contains(parentName))
+        {
+            expandedItems.Remove(parentName);
+        }
+        else
+        {
+            expandedItems.Add(parentName);
+        }
+        StateHasChanged();
+    }
+    
+    // 부모 항목이 확장되어 있는지 확인
+    private bool IsExpanded(string parentName)
+    {
+        return expandedItems.Contains(parentName);
+    }
+    
+    // 부모 항목 선택 시 호출되는 메서드 (이벤트 버블링 방지 및 @bind 충돌 해결)
+    private void OnParentSelectionChanged(A parent, ChangeEventArgs e)
+    {
+        // 체크박스 상태를 직접 업데이트
+        parent.IsSelected = (bool)(e.Value ?? false);
+        parent.UpdateChildrenSelection(); // 모든 자식의 선택 상태를 부모와 동기화
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+    
+    // 자식 항목 선택 시 호출되는 메서드 (이벤트 버블링 방지 및 @bind 충돌 해결)
+    private void OnChildSelectionChanged(A parent, B child, ChangeEventArgs e)
+    {
+        // 체크박스 상태를 직접 업데이트
+        child.IsSelected = (bool)(e.Value ?? false);
+        parent.UpdateSelectionFromChildren(); // 부모의 선택 상태를 자식들의 상태에 따라 업데이트
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+    
+    // 모든 항목 선택
+    private void SelectAll()
+    {
+        foreach (var parent in listValue)
+        {
+            parent.IsSelected = true;
+            parent.UpdateChildrenSelection();
+        }
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+    
+    // 모든 항목 선택 해제
+    private void DeselectAll()
+    {
+        foreach (var parent in listValue)
+        {
+            parent.IsSelected = false;
+            parent.UpdateChildrenSelection();
+        }
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+    
+    // 선택된 항목 목록을 업데이트
+    private void UpdateSelectedItems()
+    {
+        selectedItems.Clear();
+        
+        foreach (var parent in listValue)
+        {
+            foreach (var child in parent.Values)
+            {
+                if (child.IsSelected)
+                {
+                    selectedItems.Add($"{parent.Name} > {child.Name}");
+                }
+            }
+        }
+    }
+    
+    // 선택된 항목을 개별적으로 제거
+    private void RemoveSelectedItem(string itemName)
+    {
+        // "부모 > 자식" 형태의 문자열에서 부모와 자식 이름을 분리
+        var parts = itemName.Split(" > ");
+        if (parts.Length == 2)
+        {
+            var parentName = parts[0];
+            var childName = parts[1];
+            
+            var parent = listValue.FirstOrDefault(p => p.Name == parentName);
+            if (parent != null)
+            {
+                var child = parent.Values.FirstOrDefault(c => c.Name == childName);
+                if (child != null)
+                {
+                    child.IsSelected = false;
+                    parent.UpdateSelectionFromChildren(); // 부모 상태 업데이트
+                }
+            }
+        }
+        
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+}

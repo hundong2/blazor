@@ -1,0 +1,267 @@
+﻿@page "/TreeViewCombo"
+@using BlazorBootstrap
+
+<PageTitle>TreeView Combo</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0">
+                    <Icon Name="IconName.Diagram3" Class="me-2" />
+                    Blazor Bootstrap 트리뷰 콤보박스
+                </h3>
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <h5 class="mb-0">직무 선택</h5>
+                </CardHeader>
+                <CardBody>
+                    <!-- 선택된 항목 표시 영역 -->
+                    <div class="selected-items-container border rounded p-2 mb-2" style="min-height: 40px;">
+                        @if (SelectedItems.Any())
+                        {
+                            @foreach (var item in SelectedItems)
+                            {
+                                <Badge Color="BadgeColor.Primary" Class="me-2 mb-1 p-2 d-inline-flex align-items-center">
+                                    @item.Name
+                                    <button type="button" class="btn-close btn-close-white ms-2" 
+                                            aria-label="Close" 
+                                            @onclick="() => DeselectItem(item)"></button>
+                                </Badge>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">아래에서 항목을 선택하세요.</span>
+                        }
+                    </div>
+
+                    <!-- 드롭다운 콤보박스 -->
+                    <Dropdown>
+                        <DropdownToggleButton Color="ButtonColor.Secondary" Outline="true" class="w-100">
+                            <Icon Name="IconName.List" Class="me-2" />
+                            직무 목록 보기
+                        </DropdownToggleButton>
+                        <DropdownMenu style="width: 100%; max-height: 400px; overflow-y: auto;">
+                            <!-- 검색창 -->
+                            <div class="p-2">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <Icon Name="IconName.Search" />
+                                    </span>
+                                    <input type="text" class="form-control" placeholder="검색..." 
+                                           @bind="searchTerm" @bind:event="oninput" />
+                                </div>
+                            </div>
+                            <DropdownDivider />
+
+                            <!-- 트리뷰 -->
+                            <div class="p-2">
+                                <TreeView TItem="TreeItem"
+                                          Items="FilteredTreeItems"
+                                          ShowCheckbox="true"
+                                          OnNodeSelected="OnNodeSelected" />
+                            </div>
+                        </DropdownMenu>
+                    </Dropdown>
+                </CardBody>
+                <CardFooter>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            총 <strong>@SelectedItems.Count()</strong>개의 항목이 선택되었습니다.
+                        </small>
+                        <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small" @onclick="ClearAllSelections">
+                            <Icon Name="IconName.Trash" Class="me-1" />
+                            전체 해제
+                        </Button>
+                    </div>
+                </CardFooter>
+            </Card>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// 트리 아이템을 위한 데이터 모델 클래스입니다.
+    /// Blazor Bootstrap의 TreeView 컴포넌트와 호환되도록 HasChildren, IsChecked, Items 속성을 가집니다.
+    /// </summary>
+    public class TreeItem
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Name { get; set; } = "";
+        public bool HasChildren => Items is { Count: > 0 };
+        public bool IsChecked { get; set; }
+        public List<TreeItem>? Items { get; set; }
+        public TreeItem? Parent { get; set; }
+    }
+
+    private List<TreeItem> allTreeItems = new(); // 모든 트리 아이템 (플랫 리스트)
+    private List<TreeItem> rootTreeItems = new(); // 최상위 트리 아이템
+    private string searchTerm = ""; // 검색어
+
+    /// <summary>
+    /// 컴포넌트가 초기화될 때 샘플 데이터를 로드합니다.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        LoadSampleData();
+    }
+
+    /// <summary>
+    /// 샘플 데이터를 생성하고 초기화합니다.
+    /// </summary>
+    private void LoadSampleData()
+    {
+        rootTreeItems = new List<TreeItem>
+        {
+            new TreeItem 
+            { 
+                Name = "기술", 
+                Items = new List<TreeItem>
+                {
+                    new TreeItem { Name = "프론트엔드" },
+                    new TreeItem { Name = "백엔드" },
+                    new TreeItem { Name = "데브옵스" }
+                }
+            },
+            new TreeItem 
+            { 
+                Name = "디자인", 
+                Items = new List<TreeItem>
+                {
+                    new TreeItem { Name = "UI/UX 디자인" },
+                    new TreeItem { Name = "그래픽 디자인" }
+                }
+            },
+            new TreeItem { Name = "기획" }
+        };
+
+        // 모든 노드를 플랫 리스트로 만들고 부모-자식 관계를 설정합니다.
+        allTreeItems.Clear();
+        Action<TreeItem, TreeItem?> flatten = null!;
+        flatten = (item, parent) =>
+        {
+            item.Parent = parent;
+            allTreeItems.Add(item);
+            if (item.Items != null)
+            {
+                foreach (var child in item.Items)
+                {
+                    flatten(child, item);
+                }
+            }
+        };
+
+        foreach (var item in rootTreeItems)
+        {
+            flatten(item, null);
+        }
+    }
+
+    /// <summary>
+    /// 검색어에 따라 필터링된 트리 아이템 목록을 반환합니다.
+    /// </summary>
+    private List<TreeItem> FilteredTreeItems
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return rootTreeItems;
+            }
+
+            var lowerSearchTerm = searchTerm.ToLowerInvariant();
+            var filtered = allTreeItems
+                .Where(item => item.Name.ToLowerInvariant().Contains(lowerSearchTerm))
+                .ToList();
+
+            // 검색된 항목의 부모들도 모두 포함하여 트리 구조를 유지합니다.
+            var result = new HashSet<TreeItem>();
+            foreach (var item in filtered)
+            {
+                var current = item;
+                while (current != null)
+                {
+                    result.Add(current);
+                    current = current.Parent;
+                }
+            }
+
+            // 최상위 노드만 필터링하여 반환합니다.
+            return result.Where(item => item.Parent == null).ToList();
+        }
+    }
+
+    /// <summary>
+    /// 현재 선택된 항목들의 목록입니다.
+    /// </summary>
+    private IEnumerable<TreeItem> SelectedItems => allTreeItems.Where(item => item.IsChecked);
+
+    /// <summary>
+    /// TreeView에서 노드가 선택(체크)될 때 호출되는 이벤트 핸들러입니다.
+    /// </summary>
+    /// <param name="selectedNode">선택된 노드</param>
+    private void OnNodeSelected(TreeItem selectedNode)
+    {
+        // 부모 노드 선택 시 모든 자식 노드 상태 변경
+        UpdateChildrenState(selectedNode, selectedNode.IsChecked);
+        
+        // 자식 노드 선택 시 부모 노드 상태 업데이트
+        UpdateParentState(selectedNode.Parent);
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 자식 노드들의 체크 상태를 재귀적으로 업데이트합니다.
+    /// </summary>
+    private void UpdateChildrenState(TreeItem parent, bool isChecked)
+    {
+        if (parent.Items != null)
+        {
+            foreach (var child in parent.Items)
+            {
+                child.IsChecked = isChecked;
+                UpdateChildrenState(child, isChecked);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 부모 노드의 체크 상태를 자식 노드들의 상태에 따라 업데이트합니다.
+    /// </summary>
+    private void UpdateParentState(TreeItem? parent)
+    {
+        if (parent == null) return;
+
+        var allChildrenChecked = parent.Items?.All(child => child.IsChecked) ?? false;
+        parent.IsChecked = allChildrenChecked;
+
+        // 상위 부모로 재귀 호출
+        UpdateParentState(parent.Parent);
+    }
+
+    /// <summary>
+    /// 선택된 항목을 해제합니다.
+    /// </summary>
+    private void DeselectItem(TreeItem item)
+    {
+        item.IsChecked = false;
+        OnNodeSelected(item); // 상태 업데이트를 위해 이벤트 핸들러 호출
+    }
+
+    /// <summary>
+    /// 모든 선택을 해제합니다.
+    /// </summary>
+    private void ClearAllSelections()
+    {
+        foreach (var item in allTreeItems)
+        {
+            item.IsChecked = false;
+        }
+        StateHasChanged();
+    }
+}

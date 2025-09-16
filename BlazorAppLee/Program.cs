@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using BlazorAppLee.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore; // Required for ApplicationDbContext placeholder
+using BlazorBootstrap; // Add BlazorBootstrap
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +17,21 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     .AddRoles<ApplicationRole>() // Add role support
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+
+// Blazor Server 설정 개선
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DetailedErrors = builder.Environment.IsDevelopment();
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
+    options.DisconnectedCircuitMaxRetained = 100;
+    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
+});
+
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddAntiforgery(); // Add Antiforgery services
+
+// Add BlazorBootstrap services
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 
@@ -28,7 +41,6 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
 }
 
-
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -37,7 +49,11 @@ app.UseAuthentication(); // Ensure Authentication middleware is added
 app.UseAuthorization(); // Ensure Authorization middleware is added
 app.UseAntiforgery(); // Add Antiforgery middleware
 
-app.MapBlazorHub();
+// Blazor Hub 매핑 개선
+app.MapBlazorHub(options =>
+{
+    options.CloseOnAuthenticationExpiration = true;
+});
 app.MapFallbackToPage("/_Host");
 
 app.Run();
