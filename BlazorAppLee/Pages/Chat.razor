@@ -1,0 +1,42 @@
+@page "/chat"
+@inject BlazorAppLee.Data.ChatService ChatService
+
+<h3>Chat</h3>
+
+<div class="chat-container">
+    <div class="chat-messages">
+        @foreach (var message in messages)
+        {
+            <div class="message">
+                <strong>@message.Sender:</strong> @message.Text
+            </div>
+        }
+    </div>
+    <div class="chat-input">
+        <FluentTextField @bind-Value="userInput" Placeholder="Type your message..." />
+        <FluentButton OnClick="SendMessage">Send</FluentButton>
+    </div>
+</div>
+
+@code {
+    private string? userInput;
+    private List<ChatMessage> messages = new List<ChatMessage>();
+
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(userInput))
+        {
+            messages.Add(new ChatMessage { Sender = "User", Text = userInput });
+            var response = await ChatService.ProcessUserMessageAsync(userInput);
+            messages.Add(new ChatMessage { Sender = "AI", Text = response });
+            userInput = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    public class ChatMessage
+    {
+        public string Sender { get; set; }
+        public string Text { get; set; }
+    }
+}
