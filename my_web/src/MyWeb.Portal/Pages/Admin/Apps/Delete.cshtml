@@ -1,0 +1,18 @@
+@page "{id:guid}"
+@model MyWeb.Portal.Pages.Admin.Apps.DeleteModel
+@{
+    ViewData["Title"] = "서비스 삭제";
+}
+
+<section class="panel form-panel">
+    <p class="eyebrow">REMOVE ROUTE</p>
+    <h1>@Model.Name 삭제</h1>
+    <p>메뉴와 proxy route에서 즉시 제거됩니다. 대상 로컬 프로세스나 컨테이너 자체는 중지하지 않습니다.</p>
+    <form method="post">
+        <input asp-for="Id" type="hidden" />
+        <div class="form-actions">
+            <a asp-page="Index">취소</a>
+            <button class="danger" type="submit">삭제 확인</button>
+        </div>
+    </form>
+</section>

@@ -1,0 +1,46 @@
+name: My Web CI
+
+on:
+  pull_request:
+    paths:
+      - "my_web/**"
+      - ".github/workflows/my-web-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "my_web/**"
+      - ".github/workflows/my-web-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: my-web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: my_web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: my_web/**/packages.lock.json
+      - name: Restore tools
+        run: dotnet tool restore
+      - name: Restore locked dependencies
+        run: dotnet restore .\MyWeb.slnx --locked-mode
+      - name: Verify formatting
+        run: dotnet format .\MyWeb.slnx --verify-no-changes --no-restore
+      - name: Build
+        run: dotnet build .\MyWeb.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test .\MyWeb.slnx -c Release --no-build --no-restore
+      - name: Audit dependencies
+        run: dotnet list .\MyWeb.slnx package --vulnerable --include-transitive

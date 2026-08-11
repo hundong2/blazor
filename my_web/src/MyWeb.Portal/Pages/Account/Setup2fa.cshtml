@@ -1,0 +1,48 @@
+@page
+@model MyWeb.Portal.Pages.Account.Setup2faModel
+@{
+    ViewData["Title"] = "2단계 인증 설정";
+}
+
+<section class="panel form-panel">
+    <p class="eyebrow">SECURITY SETUP</p>
+    <h1>2단계 인증 설정</h1>
+
+    @if (Model.IsEnabled)
+    {
+        <p class="notice">이 계정에는 TOTP 2단계 인증이 활성화되어 있습니다.</p>
+        <a class="primary button" asp-page="/Index">대시보드로 이동</a>
+    }
+    else if (Model.RecoveryCodes.Count > 0)
+    {
+        <p class="notice">2단계 인증이 활성화되었습니다. 아래 복구 코드는 다시 표시되지 않습니다.</p>
+        <div class="recovery-codes">
+            @foreach (var code in Model.RecoveryCodes)
+            {
+                <code>@code</code>
+            }
+        </div>
+        <p>복구 코드를 암호 관리자 또는 오프라인 보관소에 저장한 뒤 대시보드로 이동하세요.</p>
+        <a class="primary button" asp-page="/Index">저장 완료</a>
+    }
+    else
+    {
+        <ol class="setup-steps">
+            <li>Microsoft Authenticator, Google Authenticator 등 TOTP 앱을 엽니다.</li>
+            <li>설정 키를 수동 입력합니다.</li>
+            <li>앱이 생성한 6자리 코드를 아래에 입력합니다.</li>
+        </ol>
+        <div class="secret-key"><code>@Model.SharedKey</code></div>
+        <details>
+            <summary>Authenticator URI 보기</summary>
+            <code class="breakable">@Model.AuthenticatorUri</code>
+        </details>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="validation"></div>
+            <label asp-for="Input.Code">6자리 인증 코드</label>
+            <input asp-for="Input.Code" inputmode="numeric" autocomplete="one-time-code" />
+            <span asp-validation-for="Input.Code" class="validation"></span>
+            <button class="primary" type="submit">검증하고 활성화</button>
+        </form>
+    }
+</section>

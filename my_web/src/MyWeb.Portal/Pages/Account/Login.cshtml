@@ -1,0 +1,27 @@
+@page
+@model MyWeb.Portal.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "로그인";
+}
+
+<section class="auth-panel">
+    <p class="eyebrow">PRIVATE ACCESS</p>
+    <h1>My Web 로그인</h1>
+    <p>등록된 소유자 계정만 접근할 수 있습니다.</p>
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="validation"></div>
+        <input asp-for="ReturnUrl" type="hidden" />
+        <label asp-for="Input.Email">이메일</label>
+        <input asp-for="Input.Email" autocomplete="username" />
+        <span asp-validation-for="Input.Email" class="validation"></span>
+        <label asp-for="Input.Password">비밀번호</label>
+        <input asp-for="Input.Password" autocomplete="current-password" />
+        <span asp-validation-for="Input.Password" class="validation"></span>
+        <label class="checkbox-row">
+            <input asp-for="Input.RememberMe" />
+            이 기기에서 로그인 유지
+        </label>
+        <button class="primary" type="submit">로그인</button>
+    </form>
+</section>

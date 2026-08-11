@@ -1,0 +1,18 @@
+@page "{id:guid}"
+@model MyWeb.Portal.Pages.Admin.Apps.EditModel
+@{
+    ViewData["Title"] = "서비스 수정";
+}
+
+<section class="panel form-panel">
+    <p class="eyebrow">EDIT ROUTE</p>
+    <h1>서비스 수정</h1>
+    <form method="post">
+        <input asp-for="Id" type="hidden" />
+        <partial name="_Form" model="Model.Input" />
+        <div class="form-actions">
+            <a asp-page="Index">취소</a>
+            <button class="primary" type="submit">변경 저장</button>
+        </div>
+    </form>
+</section>

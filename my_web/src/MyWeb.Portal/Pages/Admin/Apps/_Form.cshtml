@@ -1,0 +1,45 @@
+@model MyWeb.Portal.Apps.AppDefinitionInput
+
+<div asp-validation-summary="ModelOnly" class="validation"></div>
+<div class="form-grid">
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" class="validation"></span>
+    </div>
+    <div>
+        <label asp-for="Slug"></label>
+        <input asp-for="Slug" placeholder="open-webui" />
+        <span asp-validation-for="Slug" class="validation"></span>
+    </div>
+    <div class="full-row">
+        <label asp-for="InternalUrl"></label>
+        <input asp-for="InternalUrl" placeholder="http://127.0.0.1:17832/" />
+        <small>외부 공개 주소가 아닌 literal loopback 주소만 허용됩니다.</small>
+        <span asp-validation-for="InternalUrl" class="validation"></span>
+    </div>
+    <div>
+        <label asp-for="Category"></label>
+        <input asp-for="Category" />
+        <span asp-validation-for="Category" class="validation"></span>
+    </div>
+    <div>
+        <label asp-for="Icon"></label>
+        <input asp-for="Icon" />
+        <span asp-validation-for="Icon" class="validation"></span>
+    </div>
+    <div>
+        <label asp-for="HealthPath"></label>
+        <input asp-for="HealthPath" />
+        <span asp-validation-for="HealthPath" class="validation"></span>
+    </div>
+    <div>
+        <label asp-for="SortOrder"></label>
+        <input asp-for="SortOrder" />
+        <span asp-validation-for="SortOrder" class="validation"></span>
+    </div>
+    <label class="checkbox-row full-row">
+        <input asp-for="Enabled" />
+        메뉴와 proxy route 활성화
+    </label>
+</div>

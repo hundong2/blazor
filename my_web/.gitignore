@@ -1,0 +1,29 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+.smoke/
+.artifacts/
+
+# Machine-specific configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.Production.json
+!appsettings.Production.example.json
+*.pfx
+*.pem
+*.key
+
+# Runtime state (root-level directories only; do not ignore C# Data source folders)
+/data/
+/logs/
+/backups/
+/releases/
+*.db
+*.db-shm
+*.db-wal
+
+# Container state
+volumes/
