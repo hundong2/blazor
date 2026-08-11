@@ -1,0 +1,38 @@
+@inject MyWeb.Portal.Apps.AppRegistryService AppRegistry
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - My Web</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" asp-page="/Index">My Web</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form method="post" asp-page="/Account/Logout">
+                <button class="link-button" type="submit">로그아웃</button>
+            </form>
+        }
+    </header>
+    <div class="shell">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <nav class="sidebar" aria-label="서비스 메뉴">
+                <a asp-page="/Index">대시보드</a>
+                @foreach (var app in await AppRegistry.ListAsync(includeDisabled: false))
+                {
+                    <a href="@app.PublicPath">@app.Name</a>
+                }
+                <a class="admin-link" asp-page="/Admin/Apps/Index">서비스 관리</a>
+                <a asp-page="/Account/Setup2fa">보안 설정</a>
+            </nav>
+        }
+        <main class="content">
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>

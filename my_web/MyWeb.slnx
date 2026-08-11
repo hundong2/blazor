@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/MyWeb.Portal/MyWeb.Portal.csproj" />
+  <Project Path="tests/MyWeb.Portal.Tests/MyWeb.Portal.Tests.csproj" />
+</Solution>

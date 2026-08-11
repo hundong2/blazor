@@ -1,0 +1,46 @@
+@page
+@model MyWeb.Portal.Pages.Admin.Apps.IndexModel
+@{
+    ViewData["Title"] = "서비스 관리";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">APP REGISTRY</p>
+        <h1>서비스 관리</h1>
+    </div>
+    <a class="primary button" asp-page="Create">서비스 추가</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <p class="notice">@message</p>
+}
+
+<div class="table-wrap">
+    <table>
+        <thead>
+        <tr><th>이름</th><th>경로</th><th>내부 endpoint</th><th>상태</th><th></th></tr>
+        </thead>
+        <tbody>
+        @foreach (var app in Model.Applications)
+        {
+            <tr>
+                <td><strong>@app.Name</strong><br /><small>@app.Category</small></td>
+                <td><code>@app.PublicPath</code></td>
+                <td><code>@app.InternalUrl</code></td>
+                <td>
+                    @if (!app.Enabled) { <span class="pill">비활성</span> }
+                    else if (app.LastHealthy == true) { <span class="pill healthy">온라인</span> }
+                    else if (app.LastHealthy == false) { <span class="pill unhealthy">오프라인</span> }
+                    else { <span class="pill">확인 대기</span> }
+                </td>
+                <td class="actions">
+                    <a asp-page="Edit" asp-route-id="@app.Id">수정</a>
+                    <a class="danger-link" asp-page="Delete" asp-route-id="@app.Id">삭제</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

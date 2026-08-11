@@ -1,0 +1,17 @@
+@page
+@model MyWeb.Portal.Pages.Admin.Apps.CreateModel
+@{
+    ViewData["Title"] = "서비스 추가";
+}
+
+<section class="panel form-panel">
+    <p class="eyebrow">NEW ROUTE</p>
+    <h1>서비스 추가</h1>
+    <form method="post">
+        <partial name="_Form" model="Model.Input" />
+        <div class="form-actions">
+            <a asp-page="Index">취소</a>
+            <button class="primary" type="submit">저장</button>
+        </div>
+    </form>
+</section>
