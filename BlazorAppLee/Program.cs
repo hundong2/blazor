@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using BlazorAppLee.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore; // Required for ApplicationDbContext placeholder
+using Microsoft.Fast.Components.FluentUI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<ChatService>();
+builder.Services.AddFluentUIComponents();
 builder.Services.AddAntiforgery(); // Add Antiforgery services
 
 var app = builder.Build();
